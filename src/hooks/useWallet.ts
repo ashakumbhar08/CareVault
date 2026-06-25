@@ -59,6 +59,27 @@ export const useWallet = () => {
     initWallet();
   }, []);
 
+  const checkInstalled = async (): Promise<boolean> => {
+    try {
+      const isConnected = await freighter.isConnected();
+      const installed = isConnected.isConnected;
+      setState((prev) => ({ ...prev, freighterInstalled: installed }));
+      return installed;
+    } catch {
+      return false;
+    }
+  };
+
+  const refreshBalance = async (): Promise<void> => {
+    if (!state.address) return;
+    try {
+      const balance = await getAccountBalance(state.address);
+      setState((prev) => ({ ...prev, balance }));
+    } catch (err) {
+      console.error('Balance refresh error:', err);
+    }
+  };
+
   const connect = async (role: 'patient' | 'doctor') => {
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
@@ -109,5 +130,5 @@ export const useWallet = () => {
     });
   };
 
-  return { ...state, connect, disconnect };
+  return { ...state, connect, disconnect, checkInstalled, refreshBalance };
 };

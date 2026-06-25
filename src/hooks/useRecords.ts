@@ -11,7 +11,7 @@ import { useWallet } from './useWallet';
 import { MedicalRecord, RecordCategory } from '../types';
 import { isDemoMode, DEMO_RECORDS } from '../utils/demoMode';
 import { logInteraction } from '../utils/logInteraction';
-import posthog from 'posthog-js';
+import { track } from '../utils/analytics';
 
 interface UseRecordsOptions {
   walletAddress?: string;
@@ -25,7 +25,7 @@ export const useRecords = (options: UseRecordsOptions = {}) => {
   const [error, setError] = useState<string | null>(null);
   const { upload: uploadToIPFS } = useIPFS();
   const { showToast } = useToast();
-  const { role } = useWallet();
+  useWallet();
 
   const fetchRecords = async () => {
     if (!walletAddress || !enabled) return;
@@ -78,18 +78,16 @@ export const useRecords = (options: UseRecordsOptions = {}) => {
       if (isDemoMode()) {
         await new Promise((resolve) => setTimeout(resolve, 1500));
         const ipfsHash = `QmDemoHash${Date.now()}`;
-        const explorerUrl = `https://stellar.expert/explorer/testnet/tx/demo_${Date.now()}`;
+        const txHash = `demo_${Date.now()}`;
+        const explorerUrl = `https://stellar.expert/explorer/testnet/tx/${txHash}`;
         
-        posthog.capture('record_uploaded', {
-          category,
-          file_size_mb: (file.size / 1024 / 1024).toFixed(2),
-        });
+        track.recordUploaded(category, file.size / 1024 / 1024);
 
-        showToast('success', `Record uploaded! IPFS: ${ipfsHash}`, `demo_${Date.now()}`);
-        return { ipfsHash, txHash: `demo_${Date.now()}`, explorerUrl };
+        showToast('success', `Record uploaded! IPFS: ${ipfsHash}`, txHash);
+        return { ipfsHash, txHash, explorerUrl };
       }
 
-      const { ipfsHash, iv, salt } = await uploadToIPFS(file, walletAddress);
+      const { ipfsHash } = await uploadToIPFS(file, walletAddress);
 
       showToast('info', 'Creating blockchain transaction...');
 
@@ -110,13 +108,10 @@ export const useRecords = (options: UseRecordsOptions = {}) => {
         action: 'upload_record',
         txHash: hash,
         explorerUrl,
-        network: import.meta.env.VITE_STELLAR_NETWORK,
+        network: import.meta.env.VITE_STELLAR_NETWORK || 'testnet',
       });
 
-      posthog.capture('record_uploaded', {
-        category,
-        file_size_mb: (file.size / 1024 / 1024).toFixed(2),
-      });
+      track.recordUploaded(category, file.size / 1024 / 1024);
 
       showToast('success', `Record uploaded! Tx: ${hash}`, hash);
 

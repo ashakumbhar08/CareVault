@@ -21,7 +21,7 @@ export const StatsPage = () => {
 
   useEffect(() => {
     const targets = { records: 5, grants: 1, events: 5, users: 10 };
-    const intervals: NodeJS.Timeout[] = [];
+    const intervals: ReturnType<typeof setInterval>[] = [];
 
     Object.entries(targets).forEach(([key, target]) => {
       let current = 0;

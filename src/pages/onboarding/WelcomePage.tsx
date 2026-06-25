@@ -1,9 +1,15 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield, Lock, Clock, ArrowRight } from 'lucide-react';
+import { track } from '../../utils/analytics';
 
 export const WelcomePage = () => {
   const navigate = useNavigate();
+
+  const handleGetStarted = () => {
+    track.onboardingStepCompleted(0);
+    navigate('/onboarding/wallet');
+  };
 
   const features = [
     {
@@ -70,7 +76,7 @@ export const WelcomePage = () => {
           className="flex justify-center"
         >
           <button
-            onClick={() => navigate('/onboarding/wallet')}
+            onClick={handleGetStarted}
             className="flex items-center gap-2 px-8 py-4 bg-accent text-white rounded-input text-lg font-semibold hover:bg-accent/90 transition-colors"
           >
             Get Started

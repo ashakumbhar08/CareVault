@@ -17,7 +17,7 @@ export const FundWalletPage = () => {
       setFunded(true);
       track.onboardingStepCompleted(3);
       setTimeout(() => {
-        navigate('/onboarding/first-record');
+        navigate('/onboarding/record');
       }, 2000);
     }
   }, [balance, navigate]);
@@ -47,7 +47,7 @@ export const FundWalletPage = () => {
 
   const handleSkip = () => {
     track.onboardingStepCompleted(3);
-    navigate('/onboarding/first-record');
+    navigate('/onboarding/record');
   };
 
   return (

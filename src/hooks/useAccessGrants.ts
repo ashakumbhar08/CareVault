@@ -11,7 +11,7 @@ import { useToast } from './useToast';
 import { AccessGrant } from '../types';
 import { isDemoMode, DEMO_GRANTS } from '../utils/demoMode';
 import { logInteraction } from '../utils/logInteraction';
-import posthog from 'posthog-js';
+import { track } from '../utils/analytics';
 
 interface UseAccessGrantsOptions {
   walletAddress?: string;
@@ -86,10 +86,7 @@ export const useAccessGrants = (options: UseAccessGrantsOptions = {}) => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         const durationDays = Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 
-        posthog.capture('access_granted', {
-          duration_days: durationDays,
-          record_count: recordIds.length,
-        });
+        track.accessGranted(durationDays, recordIds.length);
 
         showToast('success', 'Access granted to doctor', `demo_${Date.now()}`);
         await fetchGrants();
@@ -113,15 +110,12 @@ export const useAccessGrants = (options: UseAccessGrantsOptions = {}) => {
         action: 'grant_access',
         txHash: hash,
         explorerUrl,
-        network: import.meta.env.VITE_STELLAR_NETWORK,
+        network: import.meta.env.VITE_STELLAR_NETWORK || 'testnet',
       });
 
       const durationDays = Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 
-      posthog.capture('access_granted', {
-        duration_days: durationDays,
-        record_count: recordIds.length,
-      });
+      track.accessGranted(durationDays, recordIds.length);
 
       showToast('success', `Access granted to doctor`, hash);
 
@@ -152,7 +146,7 @@ export const useAccessGrants = (options: UseAccessGrantsOptions = {}) => {
       if (isDemoMode()) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        posthog.capture('access_revoked', {});
+        track.accessRevoked();
 
         setGrants((prevGrants) =>
           prevGrants.map((grant) =>
@@ -176,10 +170,10 @@ export const useAccessGrants = (options: UseAccessGrantsOptions = {}) => {
         action: 'revoke_access',
         txHash: hash,
         explorerUrl,
-        network: import.meta.env.VITE_STELLAR_NETWORK,
+        network: import.meta.env.VITE_STELLAR_NETWORK || 'testnet',
       });
 
-      posthog.capture('access_revoked', {});
+      track.accessRevoked();
 
       setGrants((prevGrants) =>
         prevGrants.map((grant) =>

@@ -1,6 +1,6 @@
 import React from 'react';
 import * as Sentry from '@sentry/react';
-import { ShieldX, AlertCircle } from 'lucide-react';
+import { ShieldX } from 'lucide-react';
 
 interface Props {
   children: React.ReactNode;
@@ -17,7 +17,7 @@ class ErrorBoundary extends React.Component<Props, State> {
     this.state = { hasError: false, errorId: '' };
   }
 
-  static getDerivedStateFromError(error: Error) {
+  static getDerivedStateFromError() {
     return { hasError: true };
   }
 
