@@ -7,7 +7,11 @@ import {
 } from '../utils/stellar';
 import { useIPFS } from './useIPFS';
 import { useToast } from './useToast';
+import { useWallet } from './useWallet';
 import { MedicalRecord, RecordCategory } from '../types';
+import { isDemoMode, DEMO_RECORDS } from '../utils/demoMode';
+import { logInteraction } from '../utils/logInteraction';
+import posthog from 'posthog-js';
 
 interface UseRecordsOptions {
   walletAddress?: string;
@@ -19,8 +23,9 @@ export const useRecords = (options: UseRecordsOptions = {}) => {
   const [records, setRecords] = useState<MedicalRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const ipfsHook = useIPFS();
+  const { upload: uploadToIPFS } = useIPFS();
   const { showToast } = useToast();
+  const { role } = useWallet();
 
   const fetchRecords = async () => {
     if (!walletAddress || !enabled) return;
@@ -29,6 +34,11 @@ export const useRecords = (options: UseRecordsOptions = {}) => {
     setError(null);
 
     try {
+      if (isDemoMode()) {
+        setRecords(DEMO_RECORDS);
+        return;
+      }
+
       const stellarRecords = await readRecords(walletAddress);
       const mappedRecords: MedicalRecord[] = stellarRecords.map((r: StellarMedicalRecord) => ({
         id: String(r.record_id),
@@ -63,9 +73,23 @@ export const useRecords = (options: UseRecordsOptions = {}) => {
       setLoading(true);
       setError(null);
 
-      showToast('info', 'Encrypting and uploading to IPFS...');
+      showToast('info', 'Encrypting and uploading...');
 
-      const ipfsHash = await ipfsHook.upload(file);
+      if (isDemoMode()) {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        const ipfsHash = `QmDemoHash${Date.now()}`;
+        const explorerUrl = `https://stellar.expert/explorer/testnet/tx/demo_${Date.now()}`;
+        
+        posthog.capture('record_uploaded', {
+          category,
+          file_size_mb: (file.size / 1024 / 1024).toFixed(2),
+        });
+
+        showToast('success', `Record uploaded! IPFS: ${ipfsHash}`, `demo_${Date.now()}`);
+        return { ipfsHash, txHash: `demo_${Date.now()}`, explorerUrl };
+      }
+
+      const { ipfsHash, iv, salt } = await uploadToIPFS(file, walletAddress);
 
       showToast('info', 'Creating blockchain transaction...');
 
@@ -80,6 +104,19 @@ export const useRecords = (options: UseRecordsOptions = {}) => {
       });
 
       const { hash, explorerUrl } = await submitTransaction(xdr);
+
+      await logInteraction({
+        walletAddress,
+        action: 'upload_record',
+        txHash: hash,
+        explorerUrl,
+        network: import.meta.env.VITE_STELLAR_NETWORK,
+      });
+
+      posthog.capture('record_uploaded', {
+        category,
+        file_size_mb: (file.size / 1024 / 1024).toFixed(2),
+      });
 
       showToast('success', `Record uploaded! Tx: ${hash}`, hash);
 

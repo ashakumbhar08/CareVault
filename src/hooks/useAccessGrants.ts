@@ -9,6 +9,9 @@ import {
 } from '../utils/stellar';
 import { useToast } from './useToast';
 import { AccessGrant } from '../types';
+import { isDemoMode, DEMO_GRANTS } from '../utils/demoMode';
+import { logInteraction } from '../utils/logInteraction';
+import posthog from 'posthog-js';
 
 interface UseAccessGrantsOptions {
   walletAddress?: string;
@@ -30,6 +33,11 @@ export const useAccessGrants = (options: UseAccessGrantsOptions = {}) => {
     setError(null);
 
     try {
+      if (isDemoMode()) {
+        setGrants(DEMO_GRANTS);
+        return;
+      }
+
       const stellarGrants =
         role === 'patient'
           ? await readActiveGrants(walletAddress)
@@ -74,6 +82,20 @@ export const useAccessGrants = (options: UseAccessGrantsOptions = {}) => {
 
       showToast('info', 'Creating access grant...');
 
+      if (isDemoMode()) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const durationDays = Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+
+        posthog.capture('access_granted', {
+          duration_days: durationDays,
+          record_count: recordIds.length,
+        });
+
+        showToast('success', 'Access granted to doctor', `demo_${Date.now()}`);
+        await fetchGrants();
+        return { txHash: `demo_${Date.now()}`, explorerUrl: 'https://stellar.expert/explorer/testnet' };
+      }
+
       const expiresAtTimestamp = Math.floor(expiresAt.getTime() / 1000);
       const recordIdsNumbers = recordIds.map(Number);
 
@@ -86,7 +108,22 @@ export const useAccessGrants = (options: UseAccessGrantsOptions = {}) => {
 
       const { hash, explorerUrl } = await submitTransaction(xdr);
 
-      showToast('success', `Access granted to ${recordIds.length} record(s)`, hash);
+      await logInteraction({
+        walletAddress,
+        action: 'grant_access',
+        txHash: hash,
+        explorerUrl,
+        network: import.meta.env.VITE_STELLAR_NETWORK,
+      });
+
+      const durationDays = Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+
+      posthog.capture('access_granted', {
+        duration_days: durationDays,
+        record_count: recordIds.length,
+      });
+
+      showToast('success', `Access granted to doctor`, hash);
 
       await fetchGrants();
 
@@ -112,6 +149,21 @@ export const useAccessGrants = (options: UseAccessGrantsOptions = {}) => {
 
       showToast('info', 'Revoking access...');
 
+      if (isDemoMode()) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        posthog.capture('access_revoked', {});
+
+        setGrants((prevGrants) =>
+          prevGrants.map((grant) =>
+            grant.id === grantId ? { ...grant, isActive: false } : grant
+          )
+        );
+
+        showToast('success', 'Access revoked', `demo_${Date.now()}`);
+        return { txHash: `demo_${Date.now()}`, explorerUrl: 'https://stellar.expert/explorer/testnet' };
+      }
+
       const xdr = await buildRevokeAccessTx({
         patientAddress: walletAddress,
         grantId: Number(grantId),
@@ -119,13 +171,23 @@ export const useAccessGrants = (options: UseAccessGrantsOptions = {}) => {
 
       const { hash, explorerUrl } = await submitTransaction(xdr);
 
-      showToast('success', 'Access revoked successfully', hash);
+      await logInteraction({
+        walletAddress,
+        action: 'revoke_access',
+        txHash: hash,
+        explorerUrl,
+        network: import.meta.env.VITE_STELLAR_NETWORK,
+      });
+
+      posthog.capture('access_revoked', {});
 
       setGrants((prevGrants) =>
         prevGrants.map((grant) =>
           grant.id === grantId ? { ...grant, isActive: false } : grant
         )
       );
+
+      showToast('success', 'Access revoked', hash);
 
       return { txHash: hash, explorerUrl };
     } catch (err) {
