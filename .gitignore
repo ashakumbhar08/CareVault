@@ -1,0 +1,30 @@
+# Dependencies
+node_modules
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build
+dist
+*.local
+
+# Env
+.env
+.env.local
+.env.testnet
+.env.production
+
+# Stellar
+.stellar
+.contract_ids
+target/
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
