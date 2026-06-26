@@ -21,13 +21,18 @@ export const FeedbackWidget = () => {
 
       const truncated = walletAddress ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}` : null;
 
-      await supabase.from('feedback').insert([
-        {
-          rating,
-          comment: comment || null,
-          wallet_address: truncated,
-        },
-      ]);
+      // Only submit feedback if Supabase is configured
+      if (supabase) {
+        await supabase.from('feedback').insert([
+          {
+            rating,
+            comment: comment || null,
+            wallet_address: truncated,
+          },
+        ]);
+      } else {
+        console.log('Supabase not configured, feedback not stored but event tracked');
+      }
 
       posthog.capture('feedback_submitted', { rating });
 

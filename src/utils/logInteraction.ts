@@ -10,6 +10,12 @@ interface LogInteractionParams {
 
 export async function logInteraction(params: LogInteractionParams) {
   try {
+    // Skip logging if Supabase is not configured
+    if (!supabase) {
+      console.log('Supabase not configured, skipping interaction logging');
+      return;
+    }
+
     const truncated = `${params.walletAddress.slice(0, 4)}...${params.walletAddress.slice(-4)}`;
 
     await supabase.from('interactions').insert([

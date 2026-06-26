@@ -35,6 +35,10 @@ export const AdminPage = () => {
   };
 
   const loadInteractions = async () => {
+    if (!supabase) {
+      console.log('Supabase not configured');
+      return;
+    }
     const { data } = await supabase
       .from('interactions')
       .select('*')
@@ -44,6 +48,10 @@ export const AdminPage = () => {
   };
 
   const loadFeedback = async () => {
+    if (!supabase) {
+      console.log('Supabase not configured');
+      return;
+    }
     const { data } = await supabase.from('feedback').select('*').order('created_at', { ascending: false });
     setFeedback(data || []);
   };
