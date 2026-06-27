@@ -1,17 +1,32 @@
 import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar } from '../components/ui/Sidebar';
+import { clearWallet } from '../store/appState';
 
 interface DashboardLayoutProps {
   children: ReactNode;
   role: 'patient' | 'doctor';
   walletAddress: string;
+  onDisconnect?: () => void;
 }
 
-export const DashboardLayout = ({ children, role, walletAddress }: DashboardLayoutProps) => {
+export const DashboardLayout = ({ children, role, walletAddress, onDisconnect }: DashboardLayoutProps) => {
   const navigate = useNavigate();
 
   const handleDisconnect = () => {
+    // Clear React state via hook
+    onDisconnect?.();
+    
+    // Clear Zustand store
+    clearWallet();
+    
+    // Clear localStorage
+    localStorage.clear();
+    
+    // Clear sessionStorage
+    sessionStorage.clear();
+    
+    // Navigate to landing
     navigate('/');
   };
 

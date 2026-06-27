@@ -10,6 +10,7 @@ import { ToastNotification } from '../components/ui/ToastNotification';
 import { UploadRecordModal } from '../components/modals/UploadRecordModal';
 import { GrantAccessModal } from '../components/modals/GrantAccessModal';
 import { useToast } from '../hooks/useToast';
+import { useWallet } from '../hooks/useWallet';
 import { RecordCategory } from '../types';
 import { Database, Shield } from 'lucide-react';
 import { getState, removeGrant } from '../store/appState';
@@ -26,6 +27,7 @@ const categories: (RecordCategory | 'All')[] = [
 
 export const PatientDashboard = () => {
   const navigate = useNavigate();
+  const { disconnect } = useWallet();
   const [selectedCategory, setSelectedCategory] = useState<RecordCategory | 'All'>('All');
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [grantModalOpen, setGrantModalOpen] = useState(false);
@@ -67,7 +69,7 @@ export const PatientDashboard = () => {
   if (!walletAddress) return null;
 
   return (
-    <DashboardLayout role="patient" walletAddress={walletAddress}>
+    <DashboardLayout role="patient" walletAddress={walletAddress} onDisconnect={disconnect}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-text-primary">My Medical Records</h1>

@@ -5,11 +5,13 @@ import { DashboardLayout } from '../layouts/DashboardLayout';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ToastNotification } from '../components/ui/ToastNotification';
 import { useToast } from '../hooks/useToast';
+import { useWallet } from '../hooks/useWallet';
 import { ExternalLink } from 'lucide-react';
 import { getState } from '../store/appState';
 
 export const AuditPage = () => {
   const navigate = useNavigate();
+  const { disconnect } = useWallet();
   const { toasts, removeToast } = useToast();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
@@ -33,7 +35,7 @@ export const AuditPage = () => {
   if (!walletAddress) return null;
 
   return (
-    <DashboardLayout role="patient" walletAddress={walletAddress}>
+    <DashboardLayout role="patient" walletAddress={walletAddress} onDisconnect={disconnect}>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-text-primary">Audit Trail</h1>

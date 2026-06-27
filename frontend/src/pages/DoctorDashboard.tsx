@@ -6,11 +6,13 @@ import { RecordCard } from '../components/ui/RecordCard';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ToastNotification } from '../components/ui/ToastNotification';
 import { useToast } from '../hooks/useToast';
+import { useWallet } from '../hooks/useWallet';
 import { FolderOpen } from 'lucide-react';
 import { getState } from '../store/appState';
 
 export const DoctorDashboard = () => {
   const navigate = useNavigate();
+  const { disconnect } = useWallet();
   const { toasts, removeToast } = useToast();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
@@ -46,7 +48,7 @@ export const DoctorDashboard = () => {
 
   if (grants.length === 0) {
     return (
-      <DashboardLayout role="doctor" walletAddress={walletAddress}>
+      <DashboardLayout role="doctor" walletAddress={walletAddress} onDisconnect={disconnect}>
         <div className="space-y-6">
           <h1 className="text-3xl font-bold text-text-primary">Records Shared With You</h1>
           <EmptyState
@@ -60,7 +62,7 @@ export const DoctorDashboard = () => {
   }
 
   return (
-    <DashboardLayout role="doctor" walletAddress={walletAddress}>
+    <DashboardLayout role="doctor" walletAddress={walletAddress} onDisconnect={disconnect}>
       <div className="space-y-6">
         <h1 className="text-3xl font-bold text-text-primary">Records Shared With You</h1>
 
