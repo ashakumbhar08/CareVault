@@ -26,6 +26,10 @@
 ---
 
 ---
+## Vercel Deployment SS:
+
+<img width="1470" height="956" alt="Screenshot 2026-06-28 at 12 48 44 AM" src="https://github.com/user-attachments/assets/b643a96b-cbb5-4d4c-9f8b-d167aff477d4" />
+<img width="1470" height="956" alt="Screenshot 2026-06-28 at 12 48 57 AM" src="https://github.com/user-attachments/assets/e7fa6481-e211-479a-ba2e-079c218fdf4b" />
 
 ---
 
@@ -313,6 +317,14 @@ stellar contract invoke \
 ```
 
 ---
+
+### SMART CONTRACT DEPLOYMENT SCREENSHOTS :
+
+
+<img width="539" height="126" alt="image" src="https://github.com/user-attachments/assets/3e84aea2-07c8-4323-a565-9c840e99e07c" />
+
+<img width="822" height="307" alt="image" src="https://github.com/user-attachments/assets/b07fa246-83e4-4f3f-bfb4-10c90e89cabe" />
+
 
 ## 🔄 Contract Interaction Flow
 
@@ -751,7 +763,6 @@ jobs:
 
 ### CI Status Badges
 
-[![Frontend CI](https://github.com/ashakumbhar08/CareVault/actions/workflows/frontend.yml/badge.svg)](https://github.com/ashakumbhar08/CareVault/actions/workflows/frontend.yml)
 [![Contracts CI](https://github.com/ashakumbhar08/CareVault/actions/workflows/contracts.yml/badge.svg)](https://github.com/ashakumbhar08/CareVault/actions/workflows/contracts.yml)
 
 ---
