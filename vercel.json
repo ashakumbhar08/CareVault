@@ -1,14 +1,30 @@
 {
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
+  "installCommand": "npm install",
+  "framework": "vite",
+  "env": {
+    "VITE_STELLAR_NETWORK": "testnet",
+    "VITE_HORIZON_URL": "https://horizon-testnet.stellar.org",
+    "VITE_SOROBAN_RPC_URL": "https://soroban-testnet.stellar.org",
+    "VITE_NETWORK_PASSPHRASE": "Test SDF Network ; September 2015",
+    "VITE_RECORD_REGISTRY_ID": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4",
+    "VITE_ACCESS_CONTROL_ID": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4"
+  },
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, s-maxage=3600"
+        }
       ]
     }
   ]
