@@ -928,6 +928,14 @@ Screenshots coming soon. Check out the [live demo](https://carevault.vercel.app)
 
 <img width="1470" height="956" alt="Screenshot 2026-06-28 at 1 58 16 AM" src="https://github.com/user-attachments/assets/800cc9d0-6598-4045-b400-25a99be46033" />
 
+<img width="1470" height="956" alt="Screenshot 2026-06-28 at 1 57 05 AM" src="https://github.com/user-attachments/assets/9d035148-931d-4a02-9b82-3b1bad5a0935" />
+
+<img width="1470" height="956" alt="Screenshot 2026-06-28 at 1 58 01 AM" src="https://github.com/user-attachments/assets/c334f93a-b949-48f7-98eb-ddb0c120a1f1" />
+
+
+<img width="1470" height="956" alt="Screenshot 2026-06-28 at 1 58 09 AM" src="https://github.com/user-attachments/assets/bad7813d-987e-48b6-866f-dd3d30536133" />   (THIS IS A EXAMPLE IMAGE OF THE PRESCRIPTION )
+
+
 
 
 
