@@ -24,10 +24,6 @@
 
 ---
 
-| 🏥 Patient Dashboard | 📋 Upload Records | 🔐 Grant Access |
-|---|---|---|
-| ![Screenshot](docs/screenshots/patient-dashboard.png) | ![Screenshot](docs/screenshots/upload-modal.png) | ![Screenshot](docs/screenshots/grant-access.png) |
-
 ---
 
 ## Table of Contents
@@ -72,8 +68,8 @@ CareVault solves a critical problem in healthcare: patients have no ownership or
 
 | Resource | Link |
 |---|---|
-| 🌐 **Production App** | [https://carevault.vercel.app][VERCEL_DEPLOYMENT_URL] |
-| 🎬 **Demo Video** | [View on YouTube][DEMO_VIDEO_URL] |
+| 🌐 **Production App** | [https://carevault.vercel.app](https://carevault.vercel.app) |
+| 🎬 **Demo Video** | Coming soon |
 | 🔍 **RecordRegistry Contract** | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/[RECORD_REGISTRY_CONTRACT_ID]) |
 | 🔍 **AccessControl Contract** | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CAVNZFTBKFRXNLAVI4IAT45GTJBSLJZZYX3GIXMY6Q3J7WPLNJSS43SK) |
 | 📡 **Stellar Testnet** | [https://stellar.expert/explorer/testnet](https://stellar.expert/explorer/testnet) |
@@ -877,29 +873,20 @@ CareVault is built with mobile-first principles and full responsive support down
 
 ## 📸 Screenshots
 
-### Row 1: Core UI
+Screenshots coming soon. Check out the [live demo](https://carevault.vercel.app) to see CareVault in action!
 
-| Patient Dashboard | Upload Modal (Step 3 success) | Grant Access Modal |
-|---|---|---|
-| ![Screenshot](docs/screenshots/patient-dashboard.png) | ![Screenshot](docs/screenshots/upload-modal.png) | ![Screenshot](docs/screenshots/grant-access.png) |
+### Features Shown in Demo
 
-*Patient Dashboard with record list, upload button, and access grants overview*
-
-### Row 2: Advanced Features
-
-| Doctor Dashboard | Audit Trail Timeline | Mobile View (375px) |
-|---|---|---|
-| ![Screenshot](docs/screenshots/doctor-dashboard.png) | ![Screenshot](docs/screenshots/audit-timeline.png) | ![Screenshot](docs/screenshots/mobile-view.png) |
-
-*Doctor's access grants view, immutable audit trail with timestamps, responsive mobile layout*
-
-### Row 3: CI/CD & Testing
-
-| GitHub Actions Passing | Contract on Stellar Expert | Test Output Terminal |
-|---|---|---|
-| ![Screenshot](docs/screenshots/github-actions.png) | ![Screenshot](docs/screenshots/stellar-expert.png) | ![Screenshot](docs/screenshots/test-output.png) |
-
-*All CI workflows passing, deployed contract on blockchain explorer, 27/27 tests passing*
+| Feature | Description |
+|---|---|
+| **Wallet Connection** | Freighter integration for secure identity management |
+| **Record Upload** | Browser-based encryption with AES-256-GCM before IPFS upload |
+| **Patient Dashboard** | View all uploaded medical records with status and categories |
+| **Grant Access** | Time-bound access grants to doctors with expiry control |
+| **Doctor Dashboard** | View records shared by patients with active grants |
+| **Audit Trail** | Immutable log of all on-chain actions with transaction links |
+| **Mobile View** | Fully responsive design works on 375px+ devices |
+| **Error States** | Graceful error handling with user-friendly messages |
 
 ---
 
