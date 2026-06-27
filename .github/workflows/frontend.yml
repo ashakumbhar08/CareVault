@@ -2,85 +2,52 @@ name: CareVault Frontend CI
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend.yml'
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend.yml'
-
-permissions:
-  contents: read
+    branches: [ main ]
 
 jobs:
-  lint-and-type-check:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-
-      - run: npm ci
-
-      - run: npm run type-check
-
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    needs: lint-and-type-check
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-
-      - run: npm ci
-
-      - run: npm run test:run
-
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    needs: test
-    defaults:
-      run:
-        working-directory: frontend
+    
+    strategy:
+      matrix:
+        node-version: [20.x]
+
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-
-      - run: npm ci
-
-      - run: npm run build
-
-      - name: Verify build artifacts
-        run: |
-          test -f dist/index.html || exit 1
-          test -d dist/assets || exit 1
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: frontend-dist
-          path: frontend/dist/
-          retention-days: 5
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: 'frontend/package-lock.json'
+    
+    - name: Install dependencies
+      working-directory: frontend
+      run: npm ci
+    
+    - name: Type check
+      working-directory: frontend
+      run: npm run type-check
+    
+    - name: Run tests
+      working-directory: frontend
+      run: npm run test:run
+    
+    - name: Build
+      working-directory: frontend
+      run: npm run build
+    
+    - name: Verify build artifacts
+      run: |
+        test -f frontend/dist/index.html || exit 1
+        test -d frontend/dist/assets || exit 1
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-dist
+        path: frontend/dist/
+        retention-days: 5
