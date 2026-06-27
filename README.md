@@ -81,10 +81,10 @@ Patients remain the sole owners of their records while doctors receive **time-bo
 | Resource | Link |
 |-----------|------|
 | 🌐 Live Application | https://care-vault-beta.vercel.app |
-| 🎥 Demo Video | Coming Soon |
 | 📂 GitHub Repository | https://github.com/ashakumbhar08/CareVault |
 | 🌍 Stellar Explorer | https://stellar.expert/explorer/testnet |
 | 🔐 Freighter Wallet | https://www.freighter.app |
+SCREENSHOTS ARE AVAILABLE AT THE STARTING AND AT LAST 
 
 > **Note:** The project runs on the **Stellar Testnet**. Install the Freighter Wallet extension and fund your wallet using Friendbot before testing blockchain transactions.
 
