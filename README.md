@@ -2,26 +2,28 @@
 
 > *Decentralized Healthcare Record Management — Built on Stellar Blockchain*
 
-[![Frontend CI](https://github.com/ashakumbhar08/CareVault/actions/workflows/frontend.yml/badge.svg)](https://github.com/ashakumbhar08/CareVault/actions/workflows/frontend.yml)
+
 [![Contracts CI](https://github.com/ashakumbhar08/CareVault/actions/workflows/contracts.yml/badge.svg)](https://github.com/ashakumbhar08/CareVault/actions/workflows/contracts.yml)
 [![CI/CD Pipeline](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?logo=github-actions&logoColor=white)](https://github.com/ashakumbhar08/CareVault/actions)
-[![Deploy Status](https://img.shields.io/badge/Deploy-Vercel-black?logo=vercel)](https://carevault.vercel.app)
+[![Deploy Status](https://img.shields.io/badge/Deploy-Vercel-black?logo=vercel)](https://care-vault-blue.vercel.app)
 
 [![Soroban](https://img.shields.io/badge/Soroban-Smart%20Contracts-blueviolet?logo=stellar)](https://soroban.stellar.org)
 [![Stellar Testnet](https://img.shields.io/badge/Stellar-Testnet-blue?logo=stellar)](https://stellar.expert/explorer/testnet)
-[![Freighter](https://img.shields.io/badge/Freighter-Wallet-orange)](https://www.freighter.app)
+[![Freighter Wallet](https://img.shields.io/badge/Freighter-Wallet-orange)](https://www.freighter.app)
 
 [![Rust](https://img.shields.io/badge/Rust-1.75+-000000?logo=rust&logoColor=white)](https://www.rust-lang.org)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
-[![TailwindCSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
 
-[![License MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen.svg)](https://github.com/ashakumbhar08/CareVault/pulls)
-[![Node](https://img.shields.io/badge/Node-20+-339933?logo=node.js&logoColor=white)](https://nodejs.org)
-[![Last Commit](https://img.shields.io/github/last-commit/ashakumbhar08/CareVault)](https://github.com/ashakumbhar08/CareVault)
-[![Stars](https://img.shields.io/github/stars/ashakumbhar08/CareVault?style=social)](https://github.com/ashakumbhar08/CareVault)
+[![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js&logoColor=white)](https://nodejs.org)
+[![Last Commit](https://img.shields.io/github/last-commit/ashakumbhar08/CareVault)](https://github.com/ashakumbhar08/CareVault/commits/main)
+[![GitHub Stars](https://img.shields.io/github/stars/ashakumbhar08/CareVault?style=social)](https://github.com/ashakumbhar08/CareVault)
+
+---
 
 ---
 
