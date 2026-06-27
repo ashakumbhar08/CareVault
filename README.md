@@ -4,7 +4,8 @@
 
 [![Frontend CI](https://github.com/ashakumbhar08/CareVault/actions/workflows/frontend.yml/badge.svg)](https://github.com/ashakumbhar08/CareVault/actions/workflows/frontend.yml)
 [![Contracts CI](https://github.com/ashakumbhar08/CareVault/actions/workflows/contracts.yml/badge.svg)](https://github.com/ashakumbhar08/CareVault/actions/workflows/contracts.yml)
-[![Deploy Status](https://img.shields.io/badge/Deploy-Vercel-black?logo=vercel)](https://carevault-vercel.app)
+[![CI/CD Pipeline](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?logo=github-actions&logoColor=white)](https://github.com/ashakumbhar08/CareVault/actions)
+[![Deploy Status](https://img.shields.io/badge/Deploy-Vercel-black?logo=vercel)](https://carevault.vercel.app)
 
 [![Soroban](https://img.shields.io/badge/Soroban-Smart%20Contracts-blueviolet?logo=stellar)](https://soroban.stellar.org)
 [![Stellar Testnet](https://img.shields.io/badge/Stellar-Testnet-blue?logo=stellar)](https://stellar.expert/explorer/testnet)
