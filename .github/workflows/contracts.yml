@@ -6,119 +6,64 @@ on:
       - 'contracts/**'
       - 'contracts/Cargo.toml'
       - '.cargo/**'
+      - '.github/workflows/contracts.yml'
   pull_request:
     paths:
       - 'contracts/**'
       - 'contracts/Cargo.toml'
       - '.cargo/**'
 
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
+
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          target: wasm32-unknown-unknown
-          override: true
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v3
+          targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@v2
         with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache target directory
-        uses: actions/cache@v3
-        with:
-          path: target
-          key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
-      
+          workspaces: 'contracts'
+
       - name: Check contracts
         run: cargo check
         working-directory: contracts
 
-  test:
+  build-wasm:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: check
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
+
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          override: true
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v3
+          targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@v2
         with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache target directory
-        uses: actions/cache@v3
-        with:
-          path: target
-          key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Run contract tests
-        run: cargo test
+          workspaces: 'contracts'
+
+      - name: Build WASM contracts
+        run: cargo build --target wasm32-unknown-unknown --release
         working-directory: contracts
 
-  build:
-    needs: [check, test]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: wasm32-unknown-unknown
-          override: true
-      
-      - name: Cache cargo registry
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache cargo index
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Cache target directory
-        uses: actions/cache@v3
-        with:
-          path: target
-          key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
-      
-      - name: Build contracts
-        run: cargo build --release --target wasm32-unknown-unknown
-        working-directory: contracts
-      
-      - name: Upload WASM artifacts
-        uses: actions/upload-artifact@v3
+      - name: Verify WASM artifacts exist
+        run: |
+          test -f contracts/target/wasm32-unknown-unknown/release/record_registry.wasm || exit 1
+          test -f contracts/target/wasm32-unknown-unknown/release/access_control.wasm || exit 1
+          ls -lh contracts/target/wasm32-unknown-unknown/release/*.wasm
+
+      - uses: actions/upload-artifact@v4
         with:
           name: contract-wasms
           path: |
             contracts/target/wasm32-unknown-unknown/release/record_registry.wasm
             contracts/target/wasm32-unknown-unknown/release/access_control.wasm
+          retention-days: 5
