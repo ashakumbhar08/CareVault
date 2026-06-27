@@ -4,12 +4,12 @@ on:
   push:
     paths:
       - 'contracts/**'
-      - 'Cargo.toml'
+      - 'contracts/Cargo.toml'
       - '.cargo/**'
   pull_request:
     paths:
       - 'contracts/**'
-      - 'Cargo.toml'
+      - 'contracts/Cargo.toml'
       - '.cargo/**'
 
 jobs:
@@ -43,13 +43,18 @@ jobs:
           path: target
           key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
       
+      - name: Check contracts
+        run: cargo check
+        working-directory: contracts
+      
       - name: Build contracts
         run: cargo build --release --target wasm32-unknown-unknown
+        working-directory: contracts
       
       - name: Upload WASM artifacts
         uses: actions/upload-artifact@v3
         with:
           name: contract-wasms
           path: |
-            target/wasm32-unknown-unknown/release/record_registry.wasm
-            target/wasm32-unknown-unknown/release/access_control.wasm
+            contracts/target/wasm32-unknown-unknown/release/record_registry.wasm
+            contracts/target/wasm32-unknown-unknown/release/access_control.wasm

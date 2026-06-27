@@ -1,11 +1,13 @@
 # Dependencies
 node_modules
+frontend/node_modules
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
 # Build
 dist
+frontend/dist
 *.local
 
 # Env
@@ -13,6 +15,8 @@ dist
 .env.local
 .env.testnet
 .env.production
+frontend/.env.local
+frontend/.env.testnet
 
 # Stellar
 .stellar

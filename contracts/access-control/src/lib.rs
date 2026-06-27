@@ -29,6 +29,52 @@ impl AccessControlContract {
         Ok(())
     }
 
+    pub fn verify_and_grant(
+        env: Env,
+        patient: Address,
+        doctor: Address,
+        record_id: u64,
+        expires_at: u64,
+    ) -> Result<u64, ContractError> {
+        patient.require_auth();
+
+        let current_time = env.ledger().timestamp();
+        if expires_at <= current_time {
+            return Err(ContractError::InvalidExpiry);
+        }
+
+        // Grant access without inter-contract verification for now
+        let grant_id = get_grant_counter(&env) + 1;
+        set_grant_counter(&env, grant_id);
+
+        let mut record_ids = soroban_sdk::Vec::new(&env);
+        record_ids.push_back(record_id);
+
+        let grant = AccessGrant {
+            grant_id,
+            patient: patient.clone(),
+            doctor: doctor.clone(),
+            record_ids,
+            granted_at: current_time,
+            expires_at,
+            is_active: true,
+        };
+
+        set_grant(&env, &grant);
+
+        let mut patient_grants = get_patient_grants(&env, &patient);
+        patient_grants.push_back(grant_id);
+        set_patient_grants(&env, &patient, &patient_grants);
+
+        let mut doctor_grants = get_doctor_grants(&env, &doctor);
+        doctor_grants.push_back(grant_id);
+        set_doctor_grants(&env, &doctor, &doctor_grants);
+
+        emit_grant_created(&env, grant_id, patient, doctor, expires_at);
+
+        Ok(grant_id)
+    }
+
     pub fn grant_access(
         env: Env,
         patient: Address,

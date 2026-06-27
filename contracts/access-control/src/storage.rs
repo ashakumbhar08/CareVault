@@ -7,6 +7,7 @@ const TARGET_TTL: u32 = 500;
 
 pub const ADMIN_KEY: Symbol = symbol_short!("ADMIN");
 pub const GRANT_COUNTER_KEY: Symbol = symbol_short!("GRT_CNT");
+pub const REG_ID: Symbol = symbol_short!("REG_ID");
 
 pub fn get_admin(env: &Env) -> Address {
     env.storage().instance().get(&ADMIN_KEY).unwrap()
@@ -77,4 +78,12 @@ pub fn set_doctor_grants(env: &Env, doctor: &Address, grants: &Vec<u64>) {
     let key = (symbol_short!("DOC_GRT"), doctor);
     env.storage().persistent().set(&key, grants);
     env.storage().persistent().extend_ttl(&key, MIN_TTL, TARGET_TTL);
+}
+
+pub fn get_registry_id(env: &Env) -> Option<Address> {
+    env.storage().instance().get(&REG_ID)
+}
+
+pub fn set_registry_id(env: &Env, registry_id: &Address) {
+    env.storage().instance().set(&REG_ID, registry_id);
 }
