@@ -2,45 +2,48 @@ name: Soroban Contract CI
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: wasm32-unknown-unknown
-    
-    - name: Cache cargo registry
-      uses: Swatinem/rust-cache@v2
-      with:
-        workspaces: 'contracts'
-    
-    - name: Check contracts
-      working-directory: contracts
-      run: cargo check
-    
-    - name: Build WASM
-      working-directory: contracts
-      run: cargo build --target wasm32-unknown-unknown --release
-    
-    - name: Verify WASM artifacts
-      working-directory: contracts
-      run: |
-        test -f target/wasm32-unknown-unknown/release/record_registry.wasm || exit 1
-        test -f target/wasm32-unknown-unknown/release/access_control.wasm || exit 1
-        ls -lh target/wasm32-unknown-unknown/release/*.wasm
-    
-    - name: Upload WASM artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: contract-wasms
-        path: contracts/target/wasm32-unknown-unknown/release/*.wasm
-        retention-days: 5
+      - uses: actions/checkout@v4
+      
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: contracts
+      
+      - name: Cargo check
+        working-directory: contracts
+        run: cargo check
+      
+      - name: Build WASM
+        working-directory: contracts
+        run: cargo build --target wasm32-unknown-unknown --release
+      
+      - name: Verify WASM
+        working-directory: contracts
+        run: |
+          ls -lh target/wasm32-unknown-unknown/release/*.wasm
+          test -f target/wasm32-unknown-unknown/release/record_registry.wasm
+          test -f target/wasm32-unknown-unknown/release/access_control.wasm
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: contract-wasms
+          path: contracts/target/wasm32-unknown-unknown/release/*.wasm
+          retention-days: 5
