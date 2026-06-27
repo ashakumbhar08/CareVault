@@ -906,18 +906,37 @@ CareVault is built with mobile-first principles and full responsive support down
 
 Screenshots coming soon. Check out the [live demo](https://carevault.vercel.app) to see CareVault in action!
 
-### Features Shown in Demo
+### SCREENSHOTS /PREVIEW OF THE PROJECT :
 
-| Feature | Description |
-|---|---|
-| **Wallet Connection** | Freighter integration for secure identity management |
-| **Record Upload** | Browser-based encryption with AES-256-GCM before IPFS upload |
-| **Patient Dashboard** | View all uploaded medical records with status and categories |
-| **Grant Access** | Time-bound access grants to doctors with expiry control |
-| **Doctor Dashboard** | View records shared by patients with active grants |
-| **Audit Trail** | Immutable log of all on-chain actions with transaction links |
-| **Mobile View** | Fully responsive design works on 375px+ devices |
-| **Error States** | Graceful error handling with user-friendly messages |
+<img width="1470" height="956" alt="Screenshot 2026-06-28 at 1 54 17 AM" src="https://github.com/user-attachments/assets/b2516b65-cdf3-466a-91b2-2b6954ffe141" />
+
+<img width="1470" height="956" alt="Screenshot 2026-06-28 at 1 54 23 AM" src="https://github.com/user-attachments/assets/7608d0fb-d0fa-4061-9090-5cf811460684" />
+
+<img width="1470" height="956" alt="Screenshot 2026-06-28 at 1 54 37 AM" src="https://github.com/user-attachments/assets/0d3cca53-4dcc-49f5-8e17-0808f721ec54" />
+
+<img width="1470" height="956" alt="Screenshot 2026-06-28 at 1 56 44 AM" src="https://github.com/user-attachments/assets/0492ef78-75ca-49e1-b523-c2f457e2c846" />
+
+<img width="1470" height="956" alt="Screenshot 2026-06-28 at 1 56 51 AM" src="https://github.com/user-attachments/assets/c2e2e56a-f5a5-4d92-a52d-ed61ce850972" />
+
+
+
+<img width="1470" height="956" alt="Screenshot 2026-06-28 at 1 54 57 AM" src="https://github.com/user-attachments/assets/5e698071-1aae-4cb0-ac69-d4f05c82fb24" />   
+
+<img width="1470" height="956" alt="Screenshot 2026-06-28 at 1 56 28 AM" src="https://github.com/user-attachments/assets/374e599a-8d5a-4e2c-bc91-e1b989bb9c2e" />
+
+<img width="1470" height="956" alt="Screenshot 2026-06-28 at 1 56 58 AM" src="https://github.com/user-attachments/assets/e945844d-6cc2-4c8f-9ec1-fa1ab1e44dd9" />
+
+<img width="1470" height="956" alt="Screenshot 2026-06-28 at 1 58 16 AM" src="https://github.com/user-attachments/assets/800cc9d0-6598-4045-b400-25a99be46033" />
+
+
+
+
+
+
+
+
+
+
 
 ---
 
