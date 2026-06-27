@@ -36,65 +36,82 @@
 - [Features](#-features)
 - [Architecture](#-architecture)
 - [Smart Contracts](#-smart-contracts)
-- [Contract Deployment](#-contract-deployment)
-- [Contract Interaction Flow](#-contract-interaction-flow)
 - [Tech Stack](#-tech-stack)
 - [Getting Started](#-getting-started)
 - [Project Structure](#-project-structure)
 - [CI/CD Pipeline](#-cicd-pipeline)
 - [Testing](#-testing)
-- [Monitoring](#-monitoring--analytics)
 - [Mobile Responsive Design](#-mobile-responsive-design)
-- [Submission Checklist](#-stellar-level-4-submission-checklist)
 - [Screenshots](#-screenshots)
-- [Contributing](#-contributing)
 - [Author](#-author)
 - [License](#-license)
 
 ---
 
-## 🏥 Overview
+# 🏥 Overview
 
-CareVault solves a critical problem in healthcare: patients have no ownership or control over their medical records. Medical data is fragmented across dozens of providers, locked in proprietary systems, with no transparent consent mechanism. Doctors request records through slow processes, patients have no visibility into who accesses their data, and records can be deleted or altered without audit trails.
+CareVault is a decentralized healthcare record management platform built on the **Stellar Testnet** using **Soroban smart contracts**. It enables patients to securely upload encrypted medical records, manage ownership of their healthcare data, and grant or revoke doctor access through blockchain-based permissions.
 
-**CareVault puts patients in complete control.** Using Stellar blockchain and Soroban smart contracts, patients own their encrypted medical records stored on decentralized IPFS via Pinata. Access is granted to doctors for specific time periods with one-click revocation. Every action—upload, grant, revoke, access—is recorded immutably on-chain, creating a transparent, auditable history.
+Traditional healthcare systems store patient records in centralized databases where ownership and transparency are limited. CareVault addresses this by combining **Stellar**, **Soroban**, **IPFS**, and **Freighter Wallet** to create a secure, patient-controlled ecosystem with an immutable audit trail.
 
-**How it works:** Patients connect with Freighter wallet (their identity), upload encrypted medical files (PDF, JPG, PNG), which are stored on IPFS. A record entry is created on the RecordRegistry contract. When a doctor needs access, the patient grants time-bound access through the AccessControl contract, which verifies the record exists via inter-contract communication. Doctors can only access records they have active, unexpired grants for. Patients can revoke access instantly. The entire history is queryable via the immutable audit trail.
+Patients remain the sole owners of their records while doctors receive **time-bound permissions** that can be revoked instantly. Every upload, grant, revoke, and verification is recorded on-chain for complete transparency.
 
-**Why Stellar?** Stellar offers fast finality (3-5 seconds), low transaction fees (<1¢), and Soroban provides deterministic execution for financial-grade smart contracts. The Stellar Testnet gives us a real blockchain environment for production-grade security without mainnet risk.
+### Key Highlights
 
-> 🔐 **Patient-Owned Records** · 🏥 **Doctor Access Control** · 📋 **Immutable Audit Trail** · 🌐 **IPFS Encrypted Storage** · ⚡ **Stellar Blockchain**
+- 🔐 Patient-owned encrypted medical records
+- 🏥 Time-limited doctor access
+- 📁 Decentralized IPFS storage
+- ⛓️ Immutable blockchain audit trail
+- ⚡ Soroban smart contracts
+- 🌐 Stellar Testnet integration
+- 📱 Fully responsive interface
+- 🚀 Production-ready React + Vite application
 
 ---
 
-## 🚀 Live Demo
+# 🚀 Live Demo
 
 | Resource | Link |
-|---|---|
-| 🌐 **Production App** | [https://carevault.vercel.app](https://carevault.vercel.app) |
-| 🎬 **Demo Video** | Coming soon |
-| 🔍 **RecordRegistry Contract** | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/[RECORD_REGISTRY_CONTRACT_ID]) |
-| 🔍 **AccessControl Contract** | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CAVNZFTBKFRXNLAVI4IAT45GTJBSLJZZYX3GIXMY6Q3J7WPLNJSS43SK) |
-| 📡 **Stellar Testnet** | [https://stellar.expert/explorer/testnet](https://stellar.expert/explorer/testnet) |
+|-----------|------|
+| 🌐 Live Application | https://care-vault-blue.vercel.app |
+| 🎥 Demo Video | Coming Soon |
+| 📂 GitHub Repository | https://github.com/ashakumbhar08/CareVault |
+| 🌍 Stellar Explorer | https://stellar.expert/explorer/testnet |
+| 🔐 Freighter Wallet | https://www.freighter.app |
 
-> **Note:** Demo runs on Stellar Testnet. Install [Freighter Wallet](https://www.freighter.app) to interact with the live application.
+> **Note:** The project runs on the **Stellar Testnet**. Install the Freighter Wallet extension and fund your wallet using Friendbot before testing blockchain transactions.
+
+---
+
+# ✨ Features
+
+## Core Features
+
+- 🔐 Secure Freighter wallet authentication
+- 📁 Upload encrypted medical records
+- 🌐 Decentralized IPFS storage via Pinata
+- 🩺 Patient-controlled doctor access
+- ⏰ Time-based permission expiry
+- ❌ One-click access revocation
+- 📜 Immutable blockchain audit trail
+- 👥 Multi-role support (Patient / Doctor / Admin)
+
+## Advanced Features
+
+- ⚡ Soroban smart contracts
+- 🔄 Inter-contract communication
+- 📱 Fully mobile responsive
+- 🚀 GitHub Actions CI/CD pipeline
+- ⚙️ Production-ready architecture
+- 🧪 27+ automated frontend tests
+- 🔍 Stellar Horizon integration
+- 💳 Freighter transaction signing
+- 🌍 Live deployment on Vercel
+- 📊 Analytics-ready architecture
 
 ---
 
-## ✨ Features
 
-| ✅ Core Features | ✅ Advanced Features |
-|---|---|
-| 🔑 Freighter wallet connection & authentication | 🔄 Inter-contract communication (verify_and_grant) |
-| 👤 Patient-owned encrypted medical records | 📱 Mobile-responsive UI (375px and up) |
-| 🌐 IPFS storage via Pinata with AES-256-GCM browser encryption | 🧑‍🎓 5-step guided onboarding flow |
-| ⏰ Time-bound doctor access grants with millisecond precision | 💰 Friendbot testnet XLM funding integration |
-| ⚡ One-click access revocation | 🎮 Demo mode with ?demo=true query parameter |
-| 📊 Immutable on-chain audit trail with Horizon polling | 📈 PostHog analytics integration (planned) |
-| 🔍 Real-time event subscription to blockchain transactions | 🚨 Sentry error monitoring (planned) |
-| 🏥 Multi-role support (Patient / Doctor / Admin) | ⚙️ Production CI/CD pipeline with GitHub Actions |
-
----
 
 ## 🏗️ Architecture
 
