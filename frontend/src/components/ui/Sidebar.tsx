@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Shield, FileText, Shield as ShieldIcon, Activity, Settings, LogOut, User, Copy, Check, Globe, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { clearWallet } from '../../store/appState';
@@ -17,6 +17,17 @@ export const Sidebar = ({ role, walletAddress, onDisconnect }: SidebarProps) => 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [clearDataConfirm, setClearDataConfirm] = useState(false);
   const demoMode = new URLSearchParams(window.location.search).get('demo') === 'true';
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('cv_darkMode') === 'true');
+
+  // Apply dark mode class to document
+  useEffect(() => {
+    const htmlElement = document.documentElement;
+    if (darkMode) {
+      htmlElement.classList.add('dark');
+    } else {
+      htmlElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   const patientNav = [
     { icon: FileText, label: 'My Records', path: '/patient' },
@@ -50,6 +61,12 @@ export const Sidebar = ({ role, walletAddress, onDisconnect }: SidebarProps) => 
     }
     const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
     window.location.replace(newUrl);
+  };
+
+  const handleToggleDarkMode = () => {
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    localStorage.setItem('cv_darkMode', newDarkMode ? 'true' : 'false');
   };
 
   const handleClearSessionData = () => {
@@ -223,6 +240,27 @@ export const Sidebar = ({ role, walletAddress, onDisconnect }: SidebarProps) => 
                         />
                       </button>
                     </div>
+                    
+                    {/* Dark Mode Toggle */}
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                      <div>
+                        <p className="text-xs font-medium text-gray-700">Dark Mode</p>
+                        <p className="text-xs text-gray-400 mt-0.5">Dark theme for UI</p>
+                      </div>
+                      <button
+                        onClick={handleToggleDarkMode}
+                        className={`relative w-10 h-6 rounded-full transition-colors ${
+                          darkMode ? 'bg-blue-600' : 'bg-gray-200'
+                        }`}
+                      >
+                        <div
+                          className={`absolute w-5 h-5 rounded-full bg-white transition-transform top-0.5 ${
+                            darkMode ? 'translate-x-4.5' : 'translate-x-0.5'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    
                     <button
                       onClick={() => setClearDataConfirm(true)}
                       className="w-full text-sm text-red-500 hover:text-red-700 flex items-center gap-2 py-1.5 px-2 hover:bg-red-50 rounded"

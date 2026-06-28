@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -7,17 +8,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#F7F8FA',
-        card: '#FFFFFF',
+        background: 'var(--color-background)',
+        card: 'var(--color-card)',
         accent: '#2A7BE4',
-        border: '#E4E7EC',
-        'text-primary': '#111827',
-        'text-secondary': '#4B5563',
+        border: 'var(--color-border)',
+        'text-primary': 'var(--color-text-primary)',
+        'text-secondary': 'var(--color-text-secondary)',
         success: '#0F9D6A',
         warning: '#D97706',
         error: '#DC2626',
-        muted: '#9CA3AF',
-        'surface-hover': '#F3F4F6',
+        muted: 'var(--color-muted)',
+        'surface-hover': 'var(--color-surface-hover)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
