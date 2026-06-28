@@ -907,8 +907,45 @@ CareVault is built with mobile-first principles and full responsive support down
 
 
 ---
+📥 User Feedback Collection System
 
-## 👥 Real User Onboarding & Feedback (Level 4 Proof)
+CareVault uses a structured feedback system to collect real user insights from onboarding participants. This helps validate product usability and improve the platform based on real-world usage.
+
+⸻
+
+🧾 Feedback Form (User Input Source)
+
+All users onboarded through CareVault submit feedback via the official Google Form:
+
+👉 User Feedback Form
+https://forms.gle/MgA4Qzt7WPLdWrZbA
+
+Purpose:
+
+* Collect real user experience after wallet connection
+* Gather UI/UX improvement suggestions
+* Track onboarding success rate
+* Validate blockchain interaction flow
+
+⸻
+
+📊 Feedback Storage (Live Database)
+
+All responses are automatically stored in a connected Google Sheet:
+
+👉 Response Spreadsheet
+https://docs.google.com/spreadsheets/d/1pdh-Aq–LX54wjU0HHpVa25rvQ4NpERYpAJQSA-cch8/edit?usp=sharing
+
+Purpose:
+
+* Maintain structured onboarding records
+* Store wallet addresses for verification
+* Track user engagement over time
+* Support Level 4 requirement (10+ real users)
+
+
+
+## 👥 Real User Onboarding & Feedback 
 
 CareVault has been tested with 10+ real users onboarded via Freighter Wallet on Stellar Testnet. Each interaction is validated through wallet connection and blockchain activity.
 
