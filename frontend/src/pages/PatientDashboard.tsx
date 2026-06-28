@@ -7,6 +7,8 @@ import { UploadButton } from '../components/ui/UploadButton';
 import { GrantAccessButton } from '../components/ui/GrantAccessButton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ToastNotification } from '../components/ui/ToastNotification';
+import { OnboardingModal } from '../components/ui/OnboardingModal';
+import { ConfirmationModal } from '../components/ui/ConfirmationModal';
 import { UploadRecordModal } from '../components/modals/UploadRecordModal';
 import { GrantAccessModal } from '../components/modals/GrantAccessModal';
 import { useToast } from '../hooks/useToast';
@@ -32,6 +34,9 @@ export const PatientDashboard = () => {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [grantModalOpen, setGrantModalOpen] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(() => !localStorage.getItem('cv_onboarded'));
+  const [revokeConfirmation, setRevokeConfirmation] = useState<string | null>(null);
+  const [isRevoking, setIsRevoking] = useState(false);
   const { toasts, showToast, removeToast } = useToast();
 
   // Wallet guard
@@ -62,8 +67,22 @@ export const PatientDashboard = () => {
     : records.filter(r => r.category === selectedCategory);
 
   const handleRevoke = (grantId: string) => {
-    removeGrant(grantId);
-    showToast('success', 'Access revoked.');
+    setRevokeConfirmation(grantId);
+  };
+
+  const handleConfirmRevoke = async () => {
+    if (!revokeConfirmation) return;
+    
+    setIsRevoking(true);
+    try {
+      removeGrant(revokeConfirmation);
+      showToast('success', 'Access revoked successfully.');
+      setRevokeConfirmation(null);
+    } catch (error) {
+      showToast('error', 'Failed to revoke access. Please try again.');
+    } finally {
+      setIsRevoking(false);
+    }
   };
 
   if (!walletAddress) return null;
@@ -228,6 +247,23 @@ export const PatientDashboard = () => {
       />
 
       <ToastNotification toasts={toasts} onClose={removeToast} />
+
+      <OnboardingModal
+        isOpen={isOnboardingOpen}
+        onClose={() => setIsOnboardingOpen(false)}
+      />
+
+      <ConfirmationModal
+        isOpen={!!revokeConfirmation}
+        title="Revoke Access?"
+        message="Are you sure you want to revoke access? The doctor will no longer be able to view your medical records."
+        confirmLabel="Revoke"
+        cancelLabel="Cancel"
+        isDangerous={true}
+        isLoading={isRevoking}
+        onConfirm={handleConfirmRevoke}
+        onCancel={() => setRevokeConfirmation(null)}
+      />
     </DashboardLayout>
   );
 };

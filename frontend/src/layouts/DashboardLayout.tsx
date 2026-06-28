@@ -34,7 +34,7 @@ export const DashboardLayout = ({ children, role, walletAddress, onDisconnect }:
     <div className="flex min-h-screen bg-background">
       <Sidebar role={role} walletAddress={walletAddress} onDisconnect={handleDisconnect} />
       <div className="flex-1 ml-60">
-        <main className="p-8">{children}</main>
+        <main className="p-8 bg-background min-h-screen">{children}</main>
       </div>
     </div>
   );
