@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { LandingPage } from './pages/LandingPage';
 import { ConnectWalletPage } from './pages/ConnectWalletPage';
 import { PatientDashboard } from './pages/PatientDashboard';
@@ -12,10 +13,37 @@ import { InstallWalletPage } from './pages/onboarding/InstallWalletPage';
 import { RoleSelectionPage } from './pages/onboarding/RoleSelectionPage';
 import { FundWalletPage } from './pages/onboarding/FundWalletPage';
 import { FirstRecordPage } from './pages/onboarding/FirstRecordPage';
+import { WalletDisconnectedOverlay } from './components/ui/WalletDisconnectedOverlay';
+import { subscribeToWalletChanges } from './store/appState';
 
-function App() {
+function AppContent() {
+  const navigate = useNavigate();
+  const [showDisconnected, setShowDisconnected] = useState(false);
+
+  // Root-level wallet subscription (runs once, never unsubscribes)
+  useEffect(() => {
+    subscribeToWalletChanges((address) => {
+      if (address === null) {
+        setShowDisconnected(true);
+      }
+    });
+    // Note: We intentionally don't clean up this subscription
+    // It should persist for the lifetime of the app
+    // eslint-disable-next-line no-unreachable
+    return undefined;
+  }, []);
+
+  // Navigate when user dismisses overlay
+  const handleReconnect = () => {
+    setShowDisconnected(false);
+    navigate('/connect');
+  };
+
   return (
-    <BrowserRouter>
+    <>
+      {showDisconnected && (
+        <WalletDisconnectedOverlay onReconnect={handleReconnect} />
+      )}
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/stats" element={<StatsPage />} />
@@ -34,6 +62,14 @@ function App() {
         <Route path="/onboarding/fund" element={<FundWalletPage />} />
         <Route path="/onboarding/record" element={<FirstRecordPage />} />
       </Routes>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 }

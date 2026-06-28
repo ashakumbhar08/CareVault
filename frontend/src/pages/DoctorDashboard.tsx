@@ -6,11 +6,10 @@ import { RecordCard } from '../components/ui/RecordCard';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ToastNotification } from '../components/ui/ToastNotification';
 import { OnboardingModal } from '../components/ui/OnboardingModal';
-import { WalletDisconnectedOverlay } from '../components/ui/WalletDisconnectedOverlay';
 import { useToast } from '../hooks/useToast';
 import { useWallet } from '../hooks/useWallet';
 import { FolderOpen } from 'lucide-react';
-import { getState, setWallet, subscribeToWalletChanges } from '../store/appState';
+import { getState, setWallet } from '../store/appState';
 
 export const DoctorDashboard = () => {
   const navigate = useNavigate();
@@ -18,7 +17,6 @@ export const DoctorDashboard = () => {
   const { toasts, removeToast } = useToast();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
-  const [showDisconnected, setShowDisconnected] = useState(false);
 
   // FIX 3: Wallet guard with re-hydration + FIX 5: Role validation
   useEffect(() => {
@@ -42,16 +40,6 @@ export const DoctorDashboard = () => {
     }
   }, [navigate]);
 
-  // FIX 2: Subscribe to wallet changes and show overlay if cleared
-  useEffect(() => {
-    const unsubscribe = subscribeToWalletChanges((address) => {
-      if (address === null) {
-        setShowDisconnected(true);
-      }
-    });
-    return unsubscribe;
-  }, []);
-
   // AREA B FIX 2: Trigger onboarding based on wallet + role-scoped flag + mount
   useEffect(() => {
     const wallet = getState();
@@ -73,11 +61,7 @@ export const DoctorDashboard = () => {
 
   if (grants.length === 0) {
     return (
-      <>
-        {showDisconnected && (
-          <WalletDisconnectedOverlay onReconnect={() => navigate('/connect')} />
-        )}
-        <DashboardLayout role="doctor" walletAddress={walletAddress} onDisconnect={disconnect} onWalletCleared={() => setShowDisconnected(true)}>
+      <DashboardLayout role="doctor" walletAddress={walletAddress} onDisconnect={disconnect} onWalletCleared={() => {}}>
           <div className="space-y-6">
             <h1 className="text-3xl font-bold text-text-primary">Records Shared With You</h1>
             <EmptyState
@@ -91,16 +75,11 @@ export const DoctorDashboard = () => {
           onClose={() => setIsOnboardingOpen(false)}
         />
       </DashboardLayout>
-      </>
     );
   }
 
   return (
-    <>
-      {showDisconnected && (
-        <WalletDisconnectedOverlay onReconnect={() => navigate('/connect')} />
-      )}
-      <DashboardLayout role="doctor" walletAddress={walletAddress} onDisconnect={disconnect} onWalletCleared={() => setShowDisconnected(true)}>
+    <DashboardLayout role="doctor" walletAddress={walletAddress} onDisconnect={disconnect} onWalletCleared={() => {}}>
       <div className="space-y-6">
         <h1 className="text-3xl font-bold text-text-primary">Records Shared With You</h1>
 
@@ -182,6 +161,5 @@ export const DoctorDashboard = () => {
         onClose={() => setIsOnboardingOpen(false)}
       />
     </DashboardLayout>
-    </>
   );
 };

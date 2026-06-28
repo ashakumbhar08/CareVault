@@ -16,6 +16,23 @@ let state: AppState = {
   auditLog: [],
 };
 
+// Initialize wallet from sessionStorage on module load (before any component renders)
+const initializeWalletFromSession = () => {
+  try {
+    const walletStr = sessionStorage.getItem('cv_wallet');
+    if (walletStr) {
+      const { address, role } = JSON.parse(walletStr);
+      state.walletAddress = address;
+      state.walletRole = role;
+    }
+  } catch (err) {
+    console.error('Failed to hydrate wallet from sessionStorage:', err);
+  }
+};
+
+// Run initialization
+initializeWalletFromSession();
+
 // Wallet change listeners (pub/sub system)
 const walletListeners = new Set<(address: string | null) => void>();
 

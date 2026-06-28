@@ -9,14 +9,13 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { ToastNotification } from '../components/ui/ToastNotification';
 import { OnboardingModal } from '../components/ui/OnboardingModal';
 import { ConfirmationModal } from '../components/ui/ConfirmationModal';
-import { WalletDisconnectedOverlay } from '../components/ui/WalletDisconnectedOverlay';
 import { UploadRecordModal } from '../components/modals/UploadRecordModal';
 import { GrantAccessModal } from '../components/modals/GrantAccessModal';
 import { useToast } from '../hooks/useToast';
 import { useWallet } from '../hooks/useWallet';
 import { RecordCategory } from '../types';
 import { Database, Shield } from 'lucide-react';
-import { getState, removeGrant, setWallet, subscribeToWalletChanges } from '../store/appState';
+import { getState, removeGrant, setWallet } from '../store/appState';
 
 const categories: (RecordCategory | 'All')[] = [
   'All',
@@ -38,10 +37,9 @@ export const PatientDashboard = () => {
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [revokeConfirmation, setRevokeConfirmation] = useState<string | null>(null);
   const [isRevoking, setIsRevoking] = useState(false);
-  const [showDisconnected, setShowDisconnected] = useState(false);
   const { toasts, showToast, removeToast } = useToast();
 
-  // FIX 3: Wallet guard with re-hydration + FIX 2: Reactive wallet subscription
+  // FIX 3: Wallet guard with re-hydration
   useEffect(() => {
     const walletStr = sessionStorage.getItem('cv_wallet');
     if (!walletStr) {
@@ -61,16 +59,6 @@ export const PatientDashboard = () => {
       navigate('/connect');
     }
   }, [navigate]);
-
-  // FIX 2: Subscribe to wallet changes and show overlay if cleared
-  useEffect(() => {
-    const unsubscribe = subscribeToWalletChanges((address) => {
-      if (address === null) {
-        setShowDisconnected(true);
-      }
-    });
-    return unsubscribe;
-  }, []);
 
   // AREA B FIX 2: Trigger onboarding based on wallet + role-scoped flag + mount
   useEffect(() => {
@@ -110,11 +98,7 @@ export const PatientDashboard = () => {
   if (!walletAddress) return null;
 
   return (
-    <>
-      {showDisconnected && (
-        <WalletDisconnectedOverlay onReconnect={() => navigate('/connect')} />
-      )}
-      <DashboardLayout role="patient" walletAddress={walletAddress} onDisconnect={disconnect} onWalletCleared={() => setShowDisconnected(true)}>
+    <DashboardLayout role="patient" walletAddress={walletAddress} onDisconnect={disconnect} onWalletCleared={() => {}}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-text-primary">My Medical Records</h1>
@@ -292,6 +276,5 @@ export const PatientDashboard = () => {
         onCancel={() => setRevokeConfirmation(null)}
       />
     </DashboardLayout>
-    </>
   );
 };
