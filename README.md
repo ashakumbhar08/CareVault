@@ -903,7 +903,19 @@ CareVault is built with mobile-first principles and full responsive support down
 | Analytics integration (PostHog) | 🔄 Planned |
 | Error monitoring (Sentry) | 🔄 Planned |
 
+
+
+
 ---
+
+## 👥 Real User Onboarding & Feedback (Level 4 Proof)
+
+CareVault has been tested with 10+ real users onboarded via Freighter Wallet on Stellar Testnet. Each interaction is validated through wallet connection and blockchain activity.
+
+<img width="712" height="725" alt="image" src="https://github.com/user-attachments/assets/f6870e53-4600-4e09-91ec-4c542a6e484d" />
+
+
+
 
 ## 📸 Screenshots
 
