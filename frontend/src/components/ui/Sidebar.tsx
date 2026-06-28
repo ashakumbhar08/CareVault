@@ -9,9 +9,10 @@ interface SidebarProps {
   role: 'patient' | 'doctor';
   walletAddress: string;
   onDisconnect: () => void;
+  onWalletCleared?: () => void;
 }
 
-export const Sidebar = ({ role, walletAddress, onDisconnect }: SidebarProps) => {
+export const Sidebar = ({ role, walletAddress, onDisconnect, onWalletCleared }: SidebarProps) => {
   const location = useLocation();
   const [copied, setCopied] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -70,6 +71,8 @@ export const Sidebar = ({ role, walletAddress, onDisconnect }: SidebarProps) => 
   };
 
   const handleClearSessionData = () => {
+    // Call the callback first if provided
+    onWalletCleared?.();
     localStorage.clear();
     sessionStorage.clear();
     clearWallet();

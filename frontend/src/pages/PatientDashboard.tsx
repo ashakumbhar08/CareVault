@@ -9,6 +9,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { ToastNotification } from '../components/ui/ToastNotification';
 import { OnboardingModal } from '../components/ui/OnboardingModal';
 import { ConfirmationModal } from '../components/ui/ConfirmationModal';
+import { WalletDisconnectedOverlay } from '../components/ui/WalletDisconnectedOverlay';
 import { UploadRecordModal } from '../components/modals/UploadRecordModal';
 import { GrantAccessModal } from '../components/modals/GrantAccessModal';
 import { useToast } from '../hooks/useToast';
@@ -37,6 +38,7 @@ export const PatientDashboard = () => {
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [revokeConfirmation, setRevokeConfirmation] = useState<string | null>(null);
   const [isRevoking, setIsRevoking] = useState(false);
+  const [showDisconnected, setShowDisconnected] = useState(false);
   const { toasts, showToast, removeToast } = useToast();
 
   // FIX 3: Wallet guard with re-hydration + FIX 2: Reactive wallet subscription
@@ -60,15 +62,15 @@ export const PatientDashboard = () => {
     }
   }, [navigate]);
 
-  // FIX 2: Subscribe to wallet changes and redirect if cleared
+  // FIX 2: Subscribe to wallet changes and show overlay if cleared
   useEffect(() => {
     const unsubscribe = subscribeToWalletChanges((address) => {
       if (address === null) {
-        navigate('/connect');
+        setShowDisconnected(true);
       }
     });
     return unsubscribe;
-  }, [navigate]);
+  }, []);
 
   // AREA B FIX 2: Trigger onboarding based on wallet + role-scoped flag + mount
   useEffect(() => {
@@ -108,7 +110,11 @@ export const PatientDashboard = () => {
   if (!walletAddress) return null;
 
   return (
-    <DashboardLayout role="patient" walletAddress={walletAddress} onDisconnect={disconnect}>
+    <>
+      {showDisconnected && (
+        <WalletDisconnectedOverlay onReconnect={() => navigate('/connect')} />
+      )}
+      <DashboardLayout role="patient" walletAddress={walletAddress} onDisconnect={disconnect} onWalletCleared={() => setShowDisconnected(true)}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-text-primary">My Medical Records</h1>
@@ -286,5 +292,6 @@ export const PatientDashboard = () => {
         onCancel={() => setRevokeConfirmation(null)}
       />
     </DashboardLayout>
+    </>
   );
 };
