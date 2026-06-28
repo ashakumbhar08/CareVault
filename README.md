@@ -991,14 +991,35 @@ Screenshots coming soon. Check out the [live demo](https://carevault.vercel.app)
 
 
 
-
-
-
-
-
-
-
 ---
+
+
+
+### SCREENSHOTS OF UI AFTER MAKING CHANGES ACCORDING TO USER FEEDBACK :
+
+<img width="1447" height="799" alt="Screenshot 2026-06-29 at 2 52 12 AM" src="https://github.com/user-attachments/assets/cf55eba7-5238-4235-8950-9b9a4864a6ea" />
+
+
+<img width="1447" height="799" alt="Screenshot 2026-06-29 at 2 52 46 AM" src="https://github.com/user-attachments/assets/200ae75e-6cc0-4224-bae8-f39554fe91ff" />
+
+
+<img width="1447" height="799" alt="Screenshot 2026-06-29 at 2 52 52 AM" src="https://github.com/user-attachments/assets/305c432d-250c-4128-a2b2-3a49de05974f" />
+
+
+<img width="1447" height="799" alt="Screenshot 2026-06-29 at 1 18 44 AM" src="https://github.com/user-attachments/assets/e60136f6-62ee-4b6a-9499-14ff671229fc" />
+
+
+<img width="1447" height="799" alt="Screenshot 2026-06-29 at 2 32 38 AM" src="https://github.com/user-attachments/assets/40389df2-525f-4341-b0bf-6b14742f2216" />
+
+
+<img width="1447" height="799" alt="Screenshot 2026-06-29 at 2 27 42 AM" src="https://github.com/user-attachments/assets/e641444b-a764-4f28-bdb8-00416b27fee9" />
+
+
+<img width="1447" height="799" alt="Screenshot 2026-06-29 at 2 09 12 AM" src="https://github.com/user-attachments/assets/76e345cb-ded4-49d7-8f38-9b5b324c247e" />
+
+
+
+
 
 ## 🤝 Contributing
 
