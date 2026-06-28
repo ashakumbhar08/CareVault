@@ -5,18 +5,20 @@ import { DashboardLayout } from '../layouts/DashboardLayout';
 import { RecordCard } from '../components/ui/RecordCard';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ToastNotification } from '../components/ui/ToastNotification';
+import { OnboardingModal } from '../components/ui/OnboardingModal';
 import { useToast } from '../hooks/useToast';
 import { useWallet } from '../hooks/useWallet';
 import { FolderOpen } from 'lucide-react';
-import { getState } from '../store/appState';
+import { getState, setWallet, subscribeToWalletChanges } from '../store/appState';
 
 export const DoctorDashboard = () => {
   const navigate = useNavigate();
   const { disconnect } = useWallet();
   const { toasts, removeToast } = useToast();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
 
-  // Wallet guard
+  // FIX 3: Wallet guard with re-hydration + FIX 5: Role validation
   useEffect(() => {
     const walletStr = sessionStorage.getItem('cv_wallet');
     if (!walletStr) {
@@ -25,15 +27,36 @@ export const DoctorDashboard = () => {
     }
     try {
       const { address, role } = JSON.parse(walletStr);
+      // FIX 5: Validate role on entry
       if (role !== 'doctor') {
-        navigate('/connect');
+        navigate('/patient');
         return;
       }
+      // Re-hydrate global store from sessionStorage
+      setWallet(address, role);
       setWalletAddress(address);
     } catch {
       navigate('/connect');
     }
   }, [navigate]);
+
+  // FIX 2: Subscribe to wallet changes and redirect if cleared
+  useEffect(() => {
+    const unsubscribe = subscribeToWalletChanges((address) => {
+      if (address === null) {
+        navigate('/connect');
+      }
+    });
+    return unsubscribe;
+  }, [navigate]);
+
+  // AREA B FIX 2: Trigger onboarding based on wallet + role-scoped flag + mount
+  useEffect(() => {
+    const wallet = getState();
+    if (wallet.walletAddress && !localStorage.getItem('cv_onboarded_' + wallet.walletRole)) {
+      setIsOnboardingOpen(true);
+    }
+  }, []);
 
   const state = getState();
   const grants = state.grants.filter(g =>
@@ -57,6 +80,10 @@ export const DoctorDashboard = () => {
           />
         </div>
         <ToastNotification toasts={toasts} onClose={removeToast} />
+        <OnboardingModal
+          isOpen={isOnboardingOpen}
+          onClose={() => setIsOnboardingOpen(false)}
+        />
       </DashboardLayout>
     );
   }
@@ -101,7 +128,15 @@ export const DoctorDashboard = () => {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <p className="text-sm text-text-secondary">Access granted by patient.</p>
-                  <p className={`text-sm font-medium ${expiryColor}`}>{expiryText}</p>
+                  <div className="flex items-center gap-1">
+                    {/* ADDITION 5: Expiry urgency colors */}
+                    {diffDays <= 3 && diffDays > 0 && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse inline-block"></span>
+                    )}
+                    <p className={`text-sm font-medium ${
+                      diffDays <= 3 && diffDays > 0 ? 'bg-amber-50 px-2 py-1 rounded' : ''
+                    } ${expiryColor}`}>{expiryText}</p>
+                  </div>
                 </div>
               </div>
 
@@ -130,6 +165,11 @@ export const DoctorDashboard = () => {
       </div>
 
       <ToastNotification toasts={toasts} onClose={removeToast} />
+
+      <OnboardingModal
+        isOpen={isOnboardingOpen}
+        onClose={() => setIsOnboardingOpen(false)}
+      />
     </DashboardLayout>
   );
 };

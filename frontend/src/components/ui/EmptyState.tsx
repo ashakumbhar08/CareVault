@@ -1,15 +1,17 @@
-import { FileX, UserX } from 'lucide-react';
+import { FileText, UserX, Upload, UserPlus, Shield } from 'lucide-react';
 
 interface EmptyStateProps {
   variant: 'records' | 'grants' | 'patients';
   onAction?: () => void;
   actionLabel?: string;
+  role?: 'patient' | 'doctor';
 }
 
-export const EmptyState = ({ variant, onAction, actionLabel }: EmptyStateProps) => {
+export const EmptyState = ({ variant, onAction, actionLabel, role }: EmptyStateProps) => {
+  const FileXIcon = FileText;
   const config = {
     records: {
-      icon: FileX,
+      icon: FileXIcon,
       title: 'No records yet',
       description: 'Upload your first medical record to get started',
       showAction: true,
@@ -23,7 +25,7 @@ export const EmptyState = ({ variant, onAction, actionLabel }: EmptyStateProps) 
       defaultActionLabel: 'Grant Access',
     },
     patients: {
-      icon: FileX,
+      icon: FileXIcon,
       title: 'No records shared with you',
       description: 'Records will appear here when patients grant you access',
       showAction: false,
@@ -47,6 +49,36 @@ export const EmptyState = ({ variant, onAction, actionLabel }: EmptyStateProps) 
         >
           {actionLabel || defaultActionLabel}
         </button>
+      )}
+
+      {/* ADDITION 6: Quick-action card only for empty patient dashboard */}
+      {variant === 'records' && role === 'patient' && (
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg mx-auto w-full">
+          {[
+            { icon: Upload, label: 'Upload records', sub: 'PDFs and images supported', color: 'blue' },
+            { icon: UserPlus, label: 'Share with doctors', sub: 'Time-limited access', color: 'green' },
+            { icon: Shield, label: 'Stay private', sub: 'AES-256 encrypted', color: 'purple' },
+          ].map(item => {
+            const Icon = item.icon;
+            const bgColor = {
+              blue: 'bg-blue-50 border-blue-100',
+              green: 'bg-green-50 border-green-100',
+              purple: 'bg-purple-50 border-purple-100',
+            }[item.color];
+            const iconColor = {
+              blue: 'text-blue-500',
+              green: 'text-green-500',
+              purple: 'text-purple-500',
+            }[item.color];
+            return (
+              <div key={item.label} className={`${bgColor} border rounded-xl p-3 text-center`}>
+                <Icon size={18} className={`${iconColor} mx-auto mb-1.5`} />
+                <p className="text-xs font-medium text-gray-700">{item.label}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{item.sub}</p>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );

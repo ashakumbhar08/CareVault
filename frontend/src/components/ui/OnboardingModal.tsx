@@ -1,4 +1,5 @@
 import { ShieldCheck, X } from 'lucide-react';
+import { getState } from '../../store/appState';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -8,14 +9,40 @@ interface OnboardingModalProps {
 export const OnboardingModal = ({ isOpen, onClose }: OnboardingModalProps) => {
   if (!isOpen) return null;
 
+  const wallet = getState();
+  const role = wallet.walletRole;
+
   const handleGotIt = () => {
-    localStorage.setItem('cv_onboarded', 'true');
+    // AREA B FIX 3: Set role-scoped flag
+    localStorage.setItem('cv_onboarded_' + role, 'true');
     onClose();
   };
 
   const handleSkip = () => {
-    localStorage.setItem('cv_onboarded', 'true');
+    // AREA B FIX 3: Set role-scoped flag
+    localStorage.setItem('cv_onboarded_' + role, 'true');
     onClose();
+  };
+
+  // AREA B FIX 6: Role-specific content
+  const content = role === 'doctor' ? {
+    title: 'Welcome, Doctor',
+    subtitle: 'View medical records shared with you by your patients on Stellar.',
+    steps: [
+      { num: 1, title: 'Your patients must grant you access', sub: 'to their records' },
+      { num: 2, title: 'Access is time-limited', sub: 'and can be revoked at any time' },
+      { num: 3, title: 'All record views are logged', sub: 'on the blockchain audit trail' },
+      { num: 4, title: 'Records expire automatically', sub: 'check expiry dates' },
+    ]
+  } : {
+    title: 'Welcome to CareVault',
+    subtitle: undefined,
+    steps: [
+      { num: 1, title: 'Upload records', sub: 'Store prescriptions, lab results, scans, and more' },
+      { num: 2, title: 'Grant access', sub: 'Share records with doctors securely' },
+      { num: 3, title: 'Control access', sub: 'Revoke or modify permissions anytime' },
+      { num: 4, title: 'Audit everything', sub: 'Track all activity on your records' },
+    ]
   };
 
   return (
@@ -26,7 +53,12 @@ export const OnboardingModal = ({ isOpen, onClose }: OnboardingModalProps) => {
             <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
               <ShieldCheck size={24} className="text-green-600" />
             </div>
-            <h2 className="text-lg font-semibold text-text-primary">Welcome to CareVault</h2>
+            <div>
+              <h2 className="text-lg font-semibold text-text-primary">{content.title}</h2>
+              {content.subtitle && (
+                <p className="text-xs text-text-secondary mt-1">{content.subtitle}</p>
+              )}
+            </div>
           </div>
           <button
             onClick={handleSkip}
@@ -37,27 +69,14 @@ export const OnboardingModal = ({ isOpen, onClose }: OnboardingModalProps) => {
         </div>
 
         <div className="p-6 space-y-4">
-          <div>
-            <h3 className="font-semibold text-text-primary mb-2">Here's what you can do:</h3>
-            <ol className="space-y-3 text-sm text-text-secondary">
-              <li className="flex gap-3">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-accent/10 text-accent text-xs font-semibold flex-shrink-0">1</span>
-                <span><strong className="text-text-primary">Upload records</strong> - Store prescriptions, lab results, scans, and more</span>
+          <ol className="space-y-3 text-sm text-text-secondary">
+            {content.steps.map((step) => (
+              <li key={step.num} className="flex gap-3">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-accent/10 text-accent text-xs font-semibold flex-shrink-0">{step.num}</span>
+                <span><strong className="text-text-primary">{step.title}</strong> - {step.sub}</span>
               </li>
-              <li className="flex gap-3">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-accent/10 text-accent text-xs font-semibold flex-shrink-0">2</span>
-                <span><strong className="text-text-primary">Grant access</strong> - Share records with doctors securely</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-accent/10 text-accent text-xs font-semibold flex-shrink-0">3</span>
-                <span><strong className="text-text-primary">Control access</strong> - Revoke or modify permissions anytime</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-accent/10 text-accent text-xs font-semibold flex-shrink-0">4</span>
-                <span><strong className="text-text-primary">Audit everything</strong> - Track all activity on your records</span>
-              </li>
-            </ol>
-          </div>
+            ))}
+          </ol>
         </div>
 
         <div className="p-6 border-t border-border flex items-center justify-between">

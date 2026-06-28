@@ -15,7 +15,7 @@ import { useToast } from '../hooks/useToast';
 import { useWallet } from '../hooks/useWallet';
 import { RecordCategory } from '../types';
 import { Database, Shield } from 'lucide-react';
-import { getState, removeGrant } from '../store/appState';
+import { getState, removeGrant, setWallet, subscribeToWalletChanges } from '../store/appState';
 
 const categories: (RecordCategory | 'All')[] = [
   'All',
@@ -34,12 +34,12 @@ export const PatientDashboard = () => {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [grantModalOpen, setGrantModalOpen] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState(() => !localStorage.getItem('cv_onboarded'));
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [revokeConfirmation, setRevokeConfirmation] = useState<string | null>(null);
   const [isRevoking, setIsRevoking] = useState(false);
   const { toasts, showToast, removeToast } = useToast();
 
-  // Wallet guard
+  // FIX 3: Wallet guard with re-hydration + FIX 2: Reactive wallet subscription
   useEffect(() => {
     const walletStr = sessionStorage.getItem('cv_wallet');
     if (!walletStr) {
@@ -52,11 +52,31 @@ export const PatientDashboard = () => {
         navigate('/connect');
         return;
       }
+      // Re-hydrate global store from sessionStorage
+      setWallet(address, role);
       setWalletAddress(address);
     } catch {
       navigate('/connect');
     }
   }, [navigate]);
+
+  // FIX 2: Subscribe to wallet changes and redirect if cleared
+  useEffect(() => {
+    const unsubscribe = subscribeToWalletChanges((address) => {
+      if (address === null) {
+        navigate('/connect');
+      }
+    });
+    return unsubscribe;
+  }, [navigate]);
+
+  // AREA B FIX 2: Trigger onboarding based on wallet + role-scoped flag + mount
+  useEffect(() => {
+    const wallet = getState();
+    if (wallet.walletAddress && !localStorage.getItem('cv_onboarded_' + wallet.walletRole)) {
+      setIsOnboardingOpen(true);
+    }
+  }, []);
 
   const state = getState();
   const records = state.records;
@@ -155,6 +175,7 @@ export const PatientDashboard = () => {
           {filteredRecords.length === 0 ? (
             <EmptyState
               variant="records"
+              role="patient"
               onAction={() => setUploadModalOpen(true)}
             />
           ) : (

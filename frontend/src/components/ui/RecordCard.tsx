@@ -1,4 +1,4 @@
-import { FileText, Share2, Download, Eye } from 'lucide-react';
+import { FileText, Share2, Download, Eye, ExternalLink } from 'lucide-react';
 import { MedicalRecord } from '../../types';
 import { CategoryBadge } from './CategoryBadge';
 import { motion } from 'framer-motion';
@@ -123,6 +123,21 @@ export const RecordCard = ({ record }: RecordCardProps) => {
             Share
           </button>
         </div>
+
+        {/* ADDITION 3: On-Chain Badge (shows when uploaded to IPFS) */}
+        {record.ipfsHash && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <a
+              href={`https://gateway.pinata.cloud/ipfs/${record.ipfsHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 font-medium transition-colors"
+            >
+              <ExternalLink size={10} />
+              On-chain ✓
+            </a>
+          </div>
+        )}
       </div>
     </motion.div>
   );

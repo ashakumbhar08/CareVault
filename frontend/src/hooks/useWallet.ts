@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import * as freighter from '@stellar/freighter-api';
 import { getAccountBalance } from '../utils/stellar';
+import { clearWallet } from '../store/appState';
 import posthog from 'posthog-js';
 
 interface WalletState {
@@ -14,6 +16,7 @@ interface WalletState {
 }
 
 export const useWallet = () => {
+  const navigate = useNavigate();
   const [state, setState] = useState<WalletState>({
     address: null,
     balance: '0',
@@ -118,7 +121,13 @@ export const useWallet = () => {
   };
 
   const disconnect = () => {
+    // Step 1: Clear sessionStorage
     sessionStorage.removeItem('cv_wallet');
+    
+    // Step 2: Clear Zustand store (triggers listeners)
+    clearWallet();
+    
+    // Step 3: Clear local state
     setState({
       address: null,
       balance: '0',
@@ -128,6 +137,9 @@ export const useWallet = () => {
       error: null,
       freighterInstalled: state.freighterInstalled,
     });
+    
+    // Step 4: Navigate to landing
+    navigate('/');
   };
 
   return { ...state, connect, disconnect, checkInstalled, refreshBalance };

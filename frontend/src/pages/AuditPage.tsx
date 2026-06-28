@@ -37,11 +37,16 @@ export const AuditPage = () => {
   return (
     <DashboardLayout role="patient" walletAddress={walletAddress} onDisconnect={disconnect}>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary">Audit Trail</h1>
-          <p className="text-sm text-text-secondary mt-2">
-            Every action on CareVault is recorded immutably on the Stellar blockchain
-          </p>
+        {/* ADDITION 4: Live Indicator */}
+        <div className="flex items-center gap-3 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Audit Log</h1>
+            <p className="text-sm text-gray-500 mt-0.5">All activity recorded on the Stellar blockchain</p>
+          </div>
+          <div className="ml-auto flex items-center gap-1.5 bg-green-50 border border-green-100 text-green-600 text-xs font-medium px-2.5 py-1 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+            Live
+          </div>
         </div>
 
         <div className="bg-card rounded-card shadow-custom overflow-x-auto">

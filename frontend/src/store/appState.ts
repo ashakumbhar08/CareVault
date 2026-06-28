@@ -16,6 +16,9 @@ let state: AppState = {
   auditLog: [],
 };
 
+// Wallet change listeners (pub/sub system)
+const walletListeners = new Set<(address: string | null) => void>();
+
 export function getState(): AppState {
   return { ...state };
 }
@@ -23,6 +26,8 @@ export function getState(): AppState {
 export function setWallet(address: string, role: 'patient' | 'doctor'): void {
   state.walletAddress = address;
   state.walletRole = role;
+  // Notify all listeners when wallet is set
+  walletListeners.forEach(fn => fn(address));
 }
 
 export function clearWallet(): void {
@@ -32,6 +37,16 @@ export function clearWallet(): void {
     records: [],
     grants: [],
     auditLog: [],
+  };
+  // Notify all listeners when wallet is cleared
+  walletListeners.forEach(fn => fn(null));
+}
+
+export function subscribeToWalletChanges(callback: (address: string | null) => void): () => void {
+  walletListeners.add(callback);
+  // Return unsubscribe function
+  return () => {
+    walletListeners.delete(callback);
   };
 }
 
