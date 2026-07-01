@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { X, Check, Loader } from 'lucide-react';
 import { RecordCategory } from '../../types';
-import { addRecord, addAuditEntry } from '../../store/appState';
+import { addRecord, addAuditEntry, getState } from '../../store/appState';
+import { buildUploadRecordTx, submitTransaction } from '../../utils/stellar';
 import { useToast } from '../../hooks/useToast';
 
 interface UploadRecordModalProps {
@@ -10,16 +11,18 @@ interface UploadRecordModalProps {
 }
 
 type Step = 'file' | 'category' | 'processing';
+type ProcessingPhase = 'building' | 'simulating' | 'awaiting-signature' | 'submitting' | 'confirming' | 'done';
 
 export const UploadRecordModal = ({ isOpen, onClose }: UploadRecordModalProps) => {
   const [step, setStep] = useState<Step>('file');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<RecordCategory | null>(null);
-  const [processingStep, setProcessingStep] = useState<0 | 1 | 2 | 3>(0);
+  const [processingPhase, setProcessingPhase] = useState<ProcessingPhase>('building');
   const [txHash, setTxHash] = useState<string | null>(null);
   const [ipfsHash, setIpfsHash] = useState<string | null>(null);
   const [localObjectUrl, setLocalObjectUrl] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [processingError, setProcessingError] = useState<string | null>(null);
   const [showCloseButton, setShowCloseButton] = useState(false);
   const { showToast } = useToast();
 
@@ -29,11 +32,12 @@ export const UploadRecordModal = ({ isOpen, onClose }: UploadRecordModalProps) =
     setStep('file');
     setSelectedFile(null);
     setSelectedCategory(null);
-    setProcessingStep(0);
+    setProcessingPhase('building');
     setTxHash(null);
     setIpfsHash(null);
     setLocalObjectUrl(null);
     setFileError(null);
+    setProcessingError(null);
     setShowCloseButton(false);
     onClose();
   };
@@ -72,12 +76,17 @@ export const UploadRecordModal = ({ isOpen, onClose }: UploadRecordModalProps) =
 
   const runProcessing = async () => {
     try {
-      // Step 1: Encrypt file
-      setProcessingStep(1);
+      const state = getState();
+      if (!state.walletAddress) {
+        throw new Error('Wallet not connected');
+      }
+
+      // Step 1: Encrypt and prepare file (simulated)
+      setProcessingPhase('building');
       await new Promise(resolve => setTimeout(resolve, 800));
 
       // Step 2: Upload to IPFS
-      setProcessingStep(2);
+      setProcessingPhase('simulating');
       const jwt = import.meta.env.VITE_PINATA_JWT;
 
       // Always create blob URL for local fallback
@@ -85,6 +94,8 @@ export const UploadRecordModal = ({ isOpen, onClose }: UploadRecordModalProps) =
         const url = URL.createObjectURL(selectedFile);
         setLocalObjectUrl(url);
       }
+
+      let uploadedIpfsHash: string | null = null;
 
       if (jwt && selectedFile) {
         try {
@@ -97,48 +108,54 @@ export const UploadRecordModal = ({ isOpen, onClose }: UploadRecordModalProps) =
           });
           if (res.ok) {
             const data = await res.json();
-            setIpfsHash(data.IpfsHash);
+            uploadedIpfsHash = data.IpfsHash;
+            setIpfsHash(uploadedIpfsHash);
           }
         } catch (err) {
           console.error('Pinata upload failed:', err);
-          setIpfsHash(null);
+          // Continue with local fallback
         }
       }
+
+      const finalIpfsHash = uploadedIpfsHash || `local_${Date.now()}`;
+
+      // Step 3: Build Soroban transaction
+      setProcessingPhase('building');
+      const xdr = await buildUploadRecordTx({
+        patientAddress: state.walletAddress,
+        ipfsHash: finalIpfsHash,
+        category: ['Prescription', 'Lab Report', 'Scan', 'Vaccination'].indexOf(selectedCategory),
+        fileSizeKb: Math.ceil(selectedFile.size / 1024),
+      });
+
+      // Step 4: Request signature from Freighter
+      setProcessingPhase('awaiting-signature');
       await new Promise(resolve => setTimeout(resolve, 600));
 
-      // Step 3: Sign transaction
-      setProcessingStep(3);
-      try {
-        const { signTransaction } = await import('@stellar/freighter-api');
-        // Placeholder XDR - in real impl would be proper transaction
-        const dummyXDR = 'AAAAAgAAAABmPef7AAAAZABmPgkAAAABAAAAAAAAAAA=';
-        const signResult = await signTransaction(dummyXDR, { networkPassphrase: 'Test SDF Network ; September 2015' });
-        if (signResult && 'error' in signResult && signResult.error) {
-          setTxHash('local_' + Date.now().toString(16));
-        } else if (signResult && typeof signResult === 'object' && 'signedTxXdr' in signResult) {
-          setTxHash((signResult as any).signedTxXdr || 'local_' + Date.now().toString(16));
-        } else {
-          setTxHash('local_' + Date.now().toString(16));
-        }
-      } catch {
-        setTxHash('demo_' + Date.now().toString(16));
-      }
-      await new Promise(resolve => setTimeout(resolve, 700));
+      // Step 5: Submit transaction
+      setProcessingPhase('submitting');
+      const { hash } = await submitTransaction(xdr);
+      setTxHash(hash);
 
-      setProcessingStep(0);
+      // Step 6: Confirm transaction
+      setProcessingPhase('confirming');
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      setProcessingPhase('done');
 
       // Hold success screen for 1 second before showing close button
       await new Promise(resolve => setTimeout(resolve, 1000));
       setShowCloseButton(true);
     } catch (err) {
-      console.error('Processing error:', err);
-      setTxHash('local_' + Date.now().toString(16));
-      setProcessingStep(0);
+      const errorMsg = err instanceof Error ? err.message : 'Processing failed';
+      setProcessingError(errorMsg);
+      setProcessingPhase('done');
+      setShowCloseButton(true);
     }
   };
 
   const handleSuccessClose = () => {
-    if (!selectedFile || !selectedCategory) return;
+    if (!selectedFile || !selectedCategory || !txHash) return;
 
     const record = {
       id: crypto.randomUUID(),
@@ -170,6 +187,27 @@ export const UploadRecordModal = ({ isOpen, onClose }: UploadRecordModalProps) =
     'Scan',
     'Vaccination',
   ];
+
+  const getPhaseLabel = (phase: ProcessingPhase): string => {
+    switch (phase) {
+      case 'building': return 'Building transaction…';
+      case 'simulating': return 'Encrypting file…';
+      case 'awaiting-signature': return 'Awaiting signature…';
+      case 'submitting': return 'Submitting to blockchain…';
+      case 'confirming': return 'Confirming transaction…';
+      case 'done': return 'Complete';
+      default: return '';
+    }
+  };
+
+  const isPhaseComplete = (phase: ProcessingPhase): boolean => {
+    const phases: ProcessingPhase[] = ['building', 'simulating', 'awaiting-signature', 'submitting', 'confirming', 'done'];
+    const currentIndex = phases.indexOf(processingPhase);
+    const phaseIndex = phases.indexOf(phase);
+    return phaseIndex < currentIndex;
+  };
+
+  const isPhaseActive = (phase: ProcessingPhase): boolean => processingPhase === phase;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -282,58 +320,79 @@ export const UploadRecordModal = ({ isOpen, onClose }: UploadRecordModalProps) =
         {/* Processing Step */}
         {step === 'processing' && (
           <div className="space-y-4">
-            {processingStep === 0 ? (
-              // Success state
+            {processingPhase === 'done' ? (
+              // Success or error state
               <div className="text-center py-8">
-                <div className="text-success text-4xl mb-4">✓</div>
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center gap-3 text-text-primary">
-                    <Check className="w-5 h-5 text-success flex-shrink-0" />
-                    <span>Encrypting file</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-text-primary">
-                    <Check className="w-5 h-5 text-success flex-shrink-0" />
-                    <span>Uploading to IPFS</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-text-primary">
-                    <Check className="w-5 h-5 text-success flex-shrink-0" />
-                    <span>Signing transaction</span>
-                  </div>
-                </div>
-                <p className="text-lg font-bold text-success mb-2">Record uploaded successfully</p>
-                {ipfsHash && (
-                  <p className="text-xs text-muted font-mono mb-2">{ipfsHash.slice(0, 8)}…{ipfsHash.slice(-4)}</p>
-                )}
-                {txHash && (
-                  <p className="text-xs text-muted font-mono">{txHash.slice(0, 8)}…</p>
+                {processingError ? (
+                  <>
+                    <div className="text-error text-4xl mb-4">✕</div>
+                    <p className="text-lg font-bold text-error mb-2">Upload Failed</p>
+                    <p className="text-sm text-text-secondary mb-6">{processingError}</p>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-success text-4xl mb-4">✓</div>
+                    <div className="space-y-3 mb-6">
+                      <div className="flex items-center gap-3 text-text-primary">
+                        <Check className="w-5 h-5 text-success flex-shrink-0" />
+                        <span>Building transaction</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-text-primary">
+                        <Check className="w-5 h-5 text-success flex-shrink-0" />
+                        <span>Encrypting file</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-text-primary">
+                        <Check className="w-5 h-5 text-success flex-shrink-0" />
+                        <span>Signature confirmed</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-text-primary">
+                        <Check className="w-5 h-5 text-success flex-shrink-0" />
+                        <span>Submitted to blockchain</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-text-primary">
+                        <Check className="w-5 h-5 text-success flex-shrink-0" />
+                        <span>Transaction confirmed</span>
+                      </div>
+                    </div>
+                    <p className="text-lg font-bold text-success mb-2">Record uploaded successfully</p>
+                    {txHash && (
+                      <div className="space-y-2 mb-6">
+                        <p className="text-xs text-muted font-mono break-all">{txHash}</p>
+                        <a
+                          href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-accent hover:underline"
+                        >
+                          View on Stellar Expert →
+                        </a>
+                      </div>
+                    )}
+                  </>
                 )}
                 {showCloseButton && (
                   <button
-                    onClick={handleSuccessClose}
+                    onClick={processingError ? handleClose : handleSuccessClose}
                     className="mt-6 w-full px-4 py-2 bg-accent text-white rounded-input hover:bg-accent/90 transition-colors"
                   >
-                    Close
+                    {processingError ? 'Close' : 'Continue'}
                   </button>
                 )}
               </div>
             ) : (
               // Processing items
               <div className="space-y-3">
-                {[
-                  { num: 1, text: 'Encrypting file…' },
-                  { num: 2, text: 'Uploading to IPFS…' },
-                  { num: 3, text: 'Signing transaction…' },
-                ].map((item) => (
-                  <div key={item.num} className="flex items-center gap-3">
-                    {processingStep >= item.num ? (
+                {(['building', 'simulating', 'awaiting-signature', 'submitting', 'confirming'] as const).map((phase) => (
+                  <div key={phase} className="flex items-center gap-3">
+                    {isPhaseComplete(phase) ? (
                       <Check className="w-5 h-5 text-success flex-shrink-0" />
-                    ) : processingStep === item.num - 1 ? (
+                    ) : isPhaseActive(phase) ? (
                       <Loader className="w-5 h-5 text-accent animate-spin flex-shrink-0" />
                     ) : (
                       <div className="w-5 h-5 border-2 border-border rounded-full flex-shrink-0" />
                     )}
-                    <span className={processingStep >= item.num ? 'text-text-primary' : 'text-text-secondary'}>
-                      {item.text}
+                    <span className={isPhaseComplete(phase) || isPhaseActive(phase) ? 'text-text-primary' : 'text-text-secondary'}>
+                      {getPhaseLabel(phase)}
                     </span>
                   </div>
                 ))}

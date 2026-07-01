@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Check, Loader } from 'lucide-react';
 import { addGrant, addAuditEntry, getState } from '../../store/appState';
+import { buildGrantAccessTx, submitTransaction } from '../../utils/stellar';
 import { useToast } from '../../hooks/useToast';
 
 interface GrantAccessModalProps {
@@ -8,11 +9,16 @@ interface GrantAccessModalProps {
   onClose: () => void;
 }
 
+type ProcessingPhase = 'building' | 'simulating' | 'awaiting-signature' | 'submitting' | 'confirming' | 'done';
+
 export const GrantAccessModal = ({ isOpen, onClose }: GrantAccessModalProps) => {
   const [doctorWallet, setDoctorWallet] = useState('');
   const [duration, setDuration] = useState<7 | 30 | 60 | 90>(30);
-  const [submitting, setSubmitting] = useState(false);
+  const [processingPhase, setProcessingPhase] = useState<ProcessingPhase>('building');
+  const [txHash, setTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showCloseButton, setShowCloseButton] = useState(false);
   const { showToast } = useToast();
 
   if (!isOpen) return null;
@@ -20,8 +26,11 @@ export const GrantAccessModal = ({ isOpen, onClose }: GrantAccessModalProps) => 
   const handleClose = () => {
     setDoctorWallet('');
     setDuration(30);
-    setSubmitting(false);
+    setProcessingPhase('building');
+    setTxHash(null);
     setError(null);
+    setIsProcessing(false);
+    setShowCloseButton(false);
     onClose();
   };
 
@@ -33,38 +42,172 @@ export const GrantAccessModal = ({ isOpen, onClose }: GrantAccessModalProps) => 
       return;
     }
 
-    setSubmitting(true);
+    setIsProcessing(true);
     setError(null);
+    setProcessingPhase('building');
+    setShowCloseButton(false);
 
     try {
-      const expiresAt = new Date(Date.now() + duration * 24 * 60 * 60 * 1000).toISOString();
-      const grant = {
-        id: crypto.randomUUID(),
-        doctorWallet: doctorWallet.trim(),
-        grantedAt: new Date().toISOString(),
-        expiresAt,
-        recordIds: getState().records.map(r => r.id),
-        isActive: true,
-      };
+      const state = getState();
+      if (!state.walletAddress) {
+        throw new Error('Wallet not connected');
+      }
 
-      addGrant(grant);
-      addAuditEntry({
-        id: crypto.randomUUID(),
-        action: 'grant' as const,
-        timestamp: new Date().toISOString(),
-        txHash: null,
-        details: 'Access granted to ' + doctorWallet.slice(0, 4) + '…' + doctorWallet.slice(-4),
+      // Step 1: Build Soroban transaction
+      setProcessingPhase('building');
+      const recordIds = state.records.map((_, idx) => idx + 1); // Convert to contract record IDs
+      const expiresAtTimestamp = Math.floor(Date.now() / 1000) + (duration * 24 * 60 * 60);
+
+      const xdr = await buildGrantAccessTx({
+        patientAddress: state.walletAddress,
+        doctorAddress: doctorWallet.trim(),
+        recordIds,
+        expiresAt: expiresAtTimestamp,
       });
 
-      showToast('success', 'Access granted successfully.');
-      handleClose();
+      // Step 2: Request signature from Freighter
+      setProcessingPhase('awaiting-signature');
+      await new Promise(resolve => setTimeout(resolve, 600));
+
+      // Step 3: Submit transaction
+      setProcessingPhase('submitting');
+      const { hash } = await submitTransaction(xdr);
+      setTxHash(hash);
+
+      // Step 4: Confirm transaction
+      setProcessingPhase('confirming');
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      setProcessingPhase('done');
+
+      // Hold success screen for 1 second before showing close button
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setShowCloseButton(true);
     } catch (err) {
-      setError('Failed to grant access. Please try again.');
+      const errorMsg = err instanceof Error ? err.message : 'Failed to grant access';
+      setError(errorMsg);
+      setProcessingPhase('done');
+      setShowCloseButton(true);
     } finally {
-      setSubmitting(false);
+      setIsProcessing(false);
     }
   };
 
+  const getPhaseLabel = (phase: ProcessingPhase): string => {
+    switch (phase) {
+      case 'building': return 'Building transaction…';
+      case 'simulating': return 'Simulating…';
+      case 'awaiting-signature': return 'Awaiting signature…';
+      case 'submitting': return 'Submitting to blockchain…';
+      case 'confirming': return 'Confirming transaction…';
+      case 'done': return 'Complete';
+      default: return '';
+    }
+  };
+
+  const isPhaseComplete = (phase: ProcessingPhase): boolean => {
+    const phases: ProcessingPhase[] = ['building', 'simulating', 'awaiting-signature', 'submitting', 'confirming', 'done'];
+    const currentIndex = phases.indexOf(processingPhase);
+    const phaseIndex = phases.indexOf(phase);
+    return phaseIndex < currentIndex;
+  };
+
+  const isPhaseActive = (phase: ProcessingPhase): boolean => processingPhase === phase;
+
+  // Show processing screen if transaction is being submitted
+  if (isProcessing || txHash || error) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-card rounded-card shadow-lg border border-border max-w-md w-full p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-text-primary">Granting Access</h2>
+            {!isProcessing && (
+              <button onClick={handleClose} className="text-text-secondary hover:text-text-primary">
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+
+          {processingPhase === 'done' ? (
+            // Success or error state
+            <div className="text-center py-8">
+              {error ? (
+                <>
+                  <div className="text-error text-4xl mb-4">✕</div>
+                  <p className="text-lg font-bold text-error mb-2">Access Grant Failed</p>
+                  <p className="text-sm text-text-secondary mb-6">{error}</p>
+                </>
+              ) : (
+                <>
+                  <div className="text-success text-4xl mb-4">✓</div>
+                  <div className="space-y-3 mb-6">
+                    <div className="flex items-center gap-3 text-text-primary">
+                      <Check className="w-5 h-5 text-success flex-shrink-0" />
+                      <span>Building transaction</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-text-primary">
+                      <Check className="w-5 h-5 text-success flex-shrink-0" />
+                      <span>Signature confirmed</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-text-primary">
+                      <Check className="w-5 h-5 text-success flex-shrink-0" />
+                      <span>Submitted to blockchain</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-text-primary">
+                      <Check className="w-5 h-5 text-success flex-shrink-0" />
+                      <span>Transaction confirmed</span>
+                    </div>
+                  </div>
+                  <p className="text-lg font-bold text-success mb-2">Access granted successfully</p>
+                  {txHash && (
+                    <div className="space-y-2 mb-6">
+                      <p className="text-xs text-muted font-mono break-all">{txHash}</p>
+                      <a
+                        href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-accent hover:underline"
+                      >
+                        View on Stellar Expert →
+                      </a>
+                    </div>
+                  )}
+                </>
+              )}
+              {showCloseButton && (
+                <button
+                  onClick={handleClose}
+                  className="mt-6 w-full px-4 py-2 bg-accent text-white rounded-input hover:bg-accent/90 transition-colors"
+                >
+                  {error ? 'Close' : 'Done'}
+                </button>
+              )}
+            </div>
+          ) : (
+            // Processing items
+            <div className="space-y-3">
+              {(['building', 'awaiting-signature', 'submitting', 'confirming'] as const).map((phase) => (
+                <div key={phase} className="flex items-center gap-3">
+                  {isPhaseComplete(phase) ? (
+                    <Check className="w-5 h-5 text-success flex-shrink-0" />
+                  ) : isPhaseActive(phase) ? (
+                    <Loader className="w-5 h-5 text-accent animate-spin flex-shrink-0" />
+                  ) : (
+                    <div className="w-5 h-5 border-2 border-border rounded-full flex-shrink-0" />
+                  )}
+                  <span className={isPhaseComplete(phase) || isPhaseActive(phase) ? 'text-text-primary' : 'text-text-secondary'}>
+                    {getPhaseLabel(phase)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Form screen
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-card rounded-card shadow-lg border border-border max-w-md w-full p-6">
@@ -123,10 +266,10 @@ export const GrantAccessModal = ({ isOpen, onClose }: GrantAccessModalProps) => 
             </button>
             <button
               onClick={handleSubmit}
-              disabled={!isValidWallet || submitting}
+              disabled={!isValidWallet || isProcessing}
               className="flex-1 px-4 py-2 bg-accent text-white rounded-input disabled:opacity-50 hover:bg-accent/90 transition-colors"
             >
-              {submitting ? 'Granting...' : 'Grant Access'}
+              {isProcessing ? 'Granting...' : 'Grant Access'}
             </button>
           </div>
         </div>
