@@ -7,5 +7,14 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/ashakumbhar08/CareVault.git"
+  },
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "dev": "cd frontend && npm run dev",
+    "preview": "cd frontend && npm run preview",
+    "type-check": "cd frontend && npm run type-check",
+    "test": "cd frontend && npm run test",
+    "test:run": "cd frontend && npm run test:run",
+    "lint": "cd frontend && npm run lint"
   }
 }
