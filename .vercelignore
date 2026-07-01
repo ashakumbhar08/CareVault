@@ -1,0 +1,38 @@
+# Dependencies
+node_modules
+frontend/node_modules
+
+# Build artifacts (should be regenerated)
+dist
+frontend/dist
+.vite
+
+# Version control
+.git
+.gitignore
+
+# Environment files (Vercel will inject its own)
+.env
+.env.local
+.env.testnet
+frontend/.env.local
+frontend/.env.testnet
+
+# IDE & OS
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Documentation & logs
+README.md
+IMPLEMENTATION_STATUS.md
+BLOCKCHAIN_INTEGRATION_COMPLETE.md
+TASK_9_COMPLETION_SUMMARY.md
+FINAL_STATUS.txt
+
+# Stellar build artifacts
+.stellar
+target
