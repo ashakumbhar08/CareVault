@@ -1,15 +1,16 @@
 {
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
-  "installCommand": "npm install",
   "framework": "vite",
+  "nodeVersion": "18.x",
+  "regions": ["sfo1"],
   "env": {
     "VITE_STELLAR_NETWORK": "testnet",
     "VITE_HORIZON_URL": "https://horizon-testnet.stellar.org",
     "VITE_SOROBAN_RPC_URL": "https://soroban-testnet.stellar.org",
     "VITE_NETWORK_PASSPHRASE": "Test SDF Network ; September 2015",
-    "VITE_RECORD_REGISTRY_ID": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4",
-    "VITE_ACCESS_CONTROL_ID": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4"
+    "VITE_RECORD_REGISTRY_CONTRACT_ID": "CAFK4PGOJBX4WP3K33EGBQQA7K2Z25R2U4ZFC4S4AVCCDK3ASKPV7BNE",
+    "VITE_ACCESS_CONTROL_CONTRACT_ID": "CAVNZFTBKFRXNLAVI4IAT45GTJBSLJZZYX3GIXMY6Q3J7WPLNJSS43SK"
   },
   "rewrites": [
     {
@@ -19,13 +20,35 @@
   ],
   "headers": [
     {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
           "value": "public, max-age=3600, s-maxage=3600"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
         }
       ]
     }
   ]
 }
+

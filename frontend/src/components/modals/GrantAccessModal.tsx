@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { X, Check, Loader } from 'lucide-react';
-import { addGrant, addAuditEntry, getState } from '../../store/appState';
+import { getState } from '../../store/appState';
 import { buildGrantAccessTx, submitTransaction } from '../../utils/stellar';
-import { useToast } from '../../hooks/useToast';
 
 interface GrantAccessModalProps {
   isOpen: boolean;
@@ -19,7 +18,6 @@ export const GrantAccessModal = ({ isOpen, onClose }: GrantAccessModalProps) => 
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCloseButton, setShowCloseButton] = useState(false);
-  const { showToast } = useToast();
 
   if (!isOpen) return null;
 
@@ -55,7 +53,7 @@ export const GrantAccessModal = ({ isOpen, onClose }: GrantAccessModalProps) => 
 
       // Step 1: Build Soroban transaction
       setProcessingPhase('building');
-      const recordIds = state.records.map((_, idx) => idx + 1); // Convert to contract record IDs
+      const recordIds = state.records.map((_record: any, idx: number) => idx + 1); // Convert to contract record IDs
       const expiresAtTimestamp = Math.floor(Date.now() / 1000) + (duration * 24 * 60 * 60);
 
       const xdr = await buildGrantAccessTx({

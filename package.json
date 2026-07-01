@@ -1,0 +1,26 @@
+{
+  "name": "carevault",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Medical record management on Stellar Soroban",
+  "homepage": "https://github.com/ashakumbhar08/CareVault",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ashakumbhar08/CareVault.git"
+  },
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "preview": "cd frontend && npm run preview",
+    "type-check": "cd frontend && npm run type-check",
+    "test": "cd frontend && npm run test",
+    "test:run": "cd frontend && npm run test:run",
+    "lint": "cd frontend && npm run lint"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

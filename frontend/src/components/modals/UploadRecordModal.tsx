@@ -121,6 +121,10 @@ export const UploadRecordModal = ({ isOpen, onClose }: UploadRecordModalProps) =
 
       // Step 3: Build Soroban transaction
       setProcessingPhase('building');
+      if (!selectedCategory || !selectedFile || !state.walletAddress) {
+        throw new Error('Missing required data');
+      }
+      
       const xdr = await buildUploadRecordTx({
         patientAddress: state.walletAddress,
         ipfsHash: finalIpfsHash,

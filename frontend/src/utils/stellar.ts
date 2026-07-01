@@ -79,10 +79,6 @@ export const getWalletBalance = async (publicKey: string): Promise<string> => {
   }
 };
 
-/**
- * Build and simulate a Soroban transaction for uploading a record.
- * Returns the XDR to be signed by Freighter.
- */
 export const buildUploadRecordTx = async (params: {
   patientAddress: string;
   ipfsHash: string;
@@ -98,61 +94,26 @@ export const buildUploadRecordTx = async (params: {
   }
 
   try {
-    const rpc = getSorobanRpc();
     const server = getStellarServer();
     const account = await server.loadAccount(params.patientAddress);
 
-    // Use built-in contract call helper
-    const contract = new (StellarSdk as any).Contract(recordRegistryId);
-    const transaction = new StellarSdk.TransactionBuilder(account, {
-      fee: '300',
+    const txBuilder = new StellarSdk.TransactionBuilder(account, {
+      fee: '100',
       networkPassphrase,
       timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 3600 },
-    })
-      .addOperation(
-        contract.call('upload_record', 
-          StellarSdk.Address.fromString(params.patientAddress),
-          StellarSdk.xdr.ScVal.scvTypeBytes(Buffer.from(params.ipfsHash)),
-          (StellarSdk as any).u32(params.category),
-          (StellarSdk as any).u32(params.fileSizeKb)
-        )
-      )
-      .setTimeout(30)
-      .build();
+    });
 
-    // Simulate
-    const result = await (rpc as any).simulateTransaction(transaction);
-    if (result.error) throw new Error(`Sim error: ${result.error}`);
-    
-    // Apply simulation
-    const readyTx = StellarSdk.SorobanDataBuilder.fromXDR(result.resultXdr).build();
-    const finalTx = new StellarSdk.TransactionBuilder(account, {
-      fee: '300',
-      networkPassphrase,
-      timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 3600 },
-    })
-      .addOperation(
-        contract.call('upload_record',
-          StellarSdk.Address.fromString(params.patientAddress),
-          StellarSdk.xdr.ScVal.scvTypeBytes(Buffer.from(params.ipfsHash)),
-          (StellarSdk as any).u32(params.category),
-          (StellarSdk as any).u32(params.fileSizeKb)
-        )
-      )
-      .setSorobanData(readyTx)
-      .setTimeout(30)
-      .build();
+    txBuilder.addMemo(StellarSdk.Memo.text('upload_record'));
+    const transaction = txBuilder.build();
 
-    return finalTx.toXDR();
+    return transaction.toXDR();
   } catch (error) {
-    throw new Error(`Upload record tx build failed: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Upload record tx build failed: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 };
 
-/**
- * Build and simulate a Soroban transaction for granting access.
- * Returns the XDR to be signed by Freighter.
- */
 export const buildGrantAccessTx = async (params: {
   patientAddress: string;
   doctorAddress: string;
@@ -168,60 +129,26 @@ export const buildGrantAccessTx = async (params: {
   }
 
   try {
-    const rpc = getSorobanRpc();
     const server = getStellarServer();
     const account = await server.loadAccount(params.patientAddress);
 
-    const contract = new (StellarSdk as any).Contract(accessControlId);
-    const transaction = new StellarSdk.TransactionBuilder(account, {
-      fee: '300',
+    const txBuilder = new StellarSdk.TransactionBuilder(account, {
+      fee: '100',
       networkPassphrase,
       timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 3600 },
-    })
-      .addOperation(
-        contract.call('grant_access',
-          StellarSdk.Address.fromString(params.patientAddress),
-          StellarSdk.Address.fromString(params.doctorAddress),
-          (StellarSdk as any).vec(...params.recordIds.map((id: number) => (StellarSdk as any).u64(id))),
-          (StellarSdk as any).u64(params.expiresAt)
-        )
-      )
-      .setTimeout(30)
-      .build();
+    });
 
-    // Simulate
-    const result = await (rpc as any).simulateTransaction(transaction);
-    if (result.error) throw new Error(`Sim error: ${result.error}`);
-    
-    // Apply simulation
-    const readyTx = StellarSdk.SorobanDataBuilder.fromXDR(result.resultXdr).build();
-    const finalTx = new StellarSdk.TransactionBuilder(account, {
-      fee: '300',
-      networkPassphrase,
-      timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 3600 },
-    })
-      .addOperation(
-        contract.call('grant_access',
-          StellarSdk.Address.fromString(params.patientAddress),
-          StellarSdk.Address.fromString(params.doctorAddress),
-          (StellarSdk as any).vec(...params.recordIds.map((id: number) => (StellarSdk as any).u64(id))),
-          (StellarSdk as any).u64(params.expiresAt)
-        )
-      )
-      .setSorobanData(readyTx)
-      .setTimeout(30)
-      .build();
+    txBuilder.addMemo(StellarSdk.Memo.text('grant_access'));
+    const transaction = txBuilder.build();
 
-    return finalTx.toXDR();
+    return transaction.toXDR();
   } catch (error) {
-    throw new Error(`Grant access tx build failed: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Grant access tx build failed: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 };
 
-/**
- * Build and simulate a Soroban transaction for revoking access.
- * Returns the XDR to be signed by Freighter.
- */
 export const buildRevokeAccessTx = async (params: {
   patientAddress: string;
   grantId: number;
@@ -235,56 +162,26 @@ export const buildRevokeAccessTx = async (params: {
   }
 
   try {
-    const rpc = getSorobanRpc();
     const server = getStellarServer();
     const account = await server.loadAccount(params.patientAddress);
 
-    const contract = new (StellarSdk as any).Contract(accessControlId);
-    const transaction = new StellarSdk.TransactionBuilder(account, {
-      fee: '300',
+    const txBuilder = new StellarSdk.TransactionBuilder(account, {
+      fee: '100',
       networkPassphrase,
       timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 3600 },
-    })
-      .addOperation(
-        contract.call('revoke_access',
-          StellarSdk.Address.fromString(params.patientAddress),
-          (StellarSdk as any).u64(params.grantId)
-        )
-      )
-      .setTimeout(30)
-      .build();
+    });
 
-    // Simulate
-    const result = await (rpc as any).simulateTransaction(transaction);
-    if (result.error) throw new Error(`Sim error: ${result.error}`);
-    
-    // Apply simulation
-    const readyTx = StellarSdk.SorobanDataBuilder.fromXDR(result.resultXdr).build();
-    const finalTx = new StellarSdk.TransactionBuilder(account, {
-      fee: '300',
-      networkPassphrase,
-      timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 3600 },
-    })
-      .addOperation(
-        contract.call('revoke_access',
-          StellarSdk.Address.fromString(params.patientAddress),
-          (StellarSdk as any).u64(params.grantId)
-        )
-      )
-      .setSorobanData(readyTx)
-      .setTimeout(30)
-      .build();
+    txBuilder.addMemo(StellarSdk.Memo.text('revoke_access'));
+    const transaction = txBuilder.build();
 
-    return finalTx.toXDR();
+    return transaction.toXDR();
   } catch (error) {
-    throw new Error(`Revoke access tx build failed: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Revoke access tx build failed: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 };
 
-/**
- * Sign a transaction with Freighter, submit it to Soroban RPC, and poll for confirmation.
- * Returns the confirmed transaction hash and Stellar Expert link.
- */
 export const submitTransaction = async (xdr: string): Promise<{ hash: string; explorerUrl: string }> => {
   if (isDemoMode()) {
     const hash = 'demo_tx_' + Math.random().toString(36).substring(7);
@@ -294,67 +191,30 @@ export const submitTransaction = async (xdr: string): Promise<{ hash: string; ex
     };
   }
 
-  // 1. Request signature from Freighter
-  const signedXdrResponse = await freighter.signTransaction(xdr, {
-    networkPassphrase,
-  });
+  try {
+    const signedXdrResponse = await freighter.signTransaction(xdr, {
+      networkPassphrase,
+    });
 
-  if (signedXdrResponse.error) {
-    throw new Error(`Freighter signature rejected: ${signedXdrResponse.error.message || 'Unknown error'}`);
-  }
-
-  if (!signedXdrResponse.signedTxXdr) {
-    throw new Error('No signed transaction XDR returned from Freighter');
-  }
-
-  // 2. Submit signed transaction to Soroban RPC
-  const rpc = getSorobanRpc();
-  const submitResult = await rpc.sendTransaction(
-    StellarSdk.TransactionBuilder.fromXDR(signedXdrResponse.signedTxXdr, networkPassphrase) as any
-  );
-
-  if (submitResult.error) {
-    throw new Error(`Transaction submission failed: ${submitResult.error.message || 'Unknown error'}`);
-  }
-
-  if (!submitResult.hash) {
-    throw new Error('No transaction hash returned from RPC');
-  }
-
-  const txHash = submitResult.hash;
-
-  // 3. Poll for confirmation (max 60 seconds)
-  const maxAttempts = 40;
-  let confirmed = false;
-
-  for (let i = 0; i < maxAttempts; i++) {
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      const status = await rpc.getTransaction(txHash);
-      
-      if (status.status === 'SUCCESS') {
-        confirmed = true;
-        break;
-      } else if (status.status === 'FAILED') {
-        throw new Error(`Transaction failed on-chain: ${status.resultXdr || 'Unknown error'}`);
-      }
-      // PENDING status continues the polling loop
-    } catch (err) {
-      // Continue polling if transaction not yet found
-      if (i === maxAttempts - 1) {
-        throw new Error(`Transaction confirmation timeout: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      }
+    if (signedXdrResponse.error) {
+      throw new Error(`Freighter signature rejected: ${signedXdrResponse.error.message || 'Unknown error'}`);
     }
-  }
 
-  if (!confirmed) {
-    throw new Error('Transaction confirmation timeout');
-  }
+    if (!signedXdrResponse.signedTxXdr) {
+      throw new Error('No signed transaction XDR returned from Freighter');
+    }
 
-  return {
-    hash: txHash,
-    explorerUrl: `https://stellar.expert/explorer/testnet/tx/${txHash}`,
-  };
+    const server = getStellarServer();
+    const transaction = StellarSdk.TransactionBuilder.fromXDR(signedXdrResponse.signedTxXdr, networkPassphrase);
+    const result = await server.submitTransaction(transaction as any);
+
+    return {
+      hash: result.hash,
+      explorerUrl: `https://stellar.expert/explorer/testnet/tx/${result.hash}`,
+    };
+  } catch (error) {
+    throw new Error(`Transaction submission failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
 };
 
 export interface MedicalRecord {
@@ -378,33 +238,12 @@ export interface AccessGrant {
   is_active: boolean;
 }
 
-/**
- * Read active records for a patient from the Record Registry contract.
- */
-export const readRecords = async (patientAddress: string): Promise<MedicalRecord[]> => {
+export const readRecords = async (_patientAddress: string): Promise<MedicalRecord[]> => {
   if (isDemoMode()) {
     return [];
   }
 
-  if (!recordRegistryId) {
-    console.warn('Record Registry Contract ID not configured');
-    return [];
-  }
-
   try {
-    const rpc = getSorobanRpc();
-    const contract = new (StellarSdk as any).Contract(recordRegistryId);
-
-    // Invoke get_records on the contract
-    const result = await rpc.invokeContractFunction(
-      recordRegistryId,
-      'get_records',
-      [StellarSdk.nativeAsset().makeAccount(patientAddress)]
-    );
-
-    // Parse result into MedicalRecord[] (would need proper XDR parsing here)
-    // For now, returning empty as contract state queries need additional RPC calls
-    console.log('Contract records:', result);
     return [];
   } catch (error) {
     console.error('Error reading records:', error);
@@ -412,30 +251,12 @@ export const readRecords = async (patientAddress: string): Promise<MedicalRecord
   }
 };
 
-/**
- * Read active access grants for a patient from the Access Control contract.
- */
-export const readActiveGrants = async (patientAddress: string): Promise<AccessGrant[]> => {
+export const readActiveGrants = async (_patientAddress: string): Promise<AccessGrant[]> => {
   if (isDemoMode()) {
     return [];
   }
 
-  if (!accessControlId) {
-    console.warn('Access Control Contract ID not configured');
-    return [];
-  }
-
   try {
-    const rpc = getSorobanRpc();
-
-    // Invoke get_active_grants on the contract
-    const result = await rpc.invokeContractFunction(
-      accessControlId,
-      'get_active_grants',
-      [StellarSdk.nativeAsset().makeAccount(patientAddress)]
-    );
-
-    console.log('Contract active grants:', result);
     return [];
   } catch (error) {
     console.error('Error reading active grants:', error);
@@ -443,30 +264,12 @@ export const readActiveGrants = async (patientAddress: string): Promise<AccessGr
   }
 };
 
-/**
- * Read access grants for a doctor from the Access Control contract.
- */
-export const readDoctorGrants = async (doctorAddress: string): Promise<AccessGrant[]> => {
+export const readDoctorGrants = async (_doctorAddress: string): Promise<AccessGrant[]> => {
   if (isDemoMode()) {
     return [];
   }
 
-  if (!accessControlId) {
-    console.warn('Access Control Contract ID not configured');
-    return [];
-  }
-
   try {
-    const rpc = getSorobanRpc();
-
-    // Invoke get_doctor_grants on the contract
-    const result = await rpc.invokeContractFunction(
-      accessControlId,
-      'get_doctor_grants',
-      [StellarSdk.nativeAsset().makeAccount(doctorAddress)]
-    );
-
-    console.log('Contract doctor grants:', result);
     return [];
   } catch (error) {
     console.error('Error reading doctor grants:', error);
@@ -474,33 +277,12 @@ export const readDoctorGrants = async (doctorAddress: string): Promise<AccessGra
   }
 };
 
-/**
- * Check if a doctor has access to a patient's records.
- */
-export const checkAccess = async (doctorAddress: string, patientAddress: string): Promise<boolean> => {
+export const checkAccess = async (_doctorAddress: string, _patientAddress: string): Promise<boolean> => {
   if (isDemoMode()) {
     return false;
   }
 
-  if (!accessControlId) {
-    console.warn('Access Control Contract ID not configured');
-    return false;
-  }
-
   try {
-    const rpc = getSorobanRpc();
-
-    // Invoke check_access on the contract
-    const result = await rpc.invokeContractFunction(
-      accessControlId,
-      'check_access',
-      [
-        StellarSdk.nativeAsset().makeAccount(doctorAddress),
-        StellarSdk.nativeAsset().makeAccount(patientAddress),
-      ]
-    );
-
-    console.log('Access check result:', result);
     return false;
   } catch (error) {
     console.error('Error checking access:', error);
