@@ -823,22 +823,7 @@ cargo test -- --nocapture       # Show println! output
 
 ---
 
-## 📊 Monitoring & Analytics
 
-### PostHog Analytics (Planned)
-
-Real-time product analytics to track user behavior and feature usage.
-
-| Event | Trigger | Properties |
-|---|---|---|
-| `wallet_connected` | Freighter connect successful | `{ role, network, chain }` |
-| `record_uploaded` | Upload modal completed | `{ category, file_size_mb, duration_sec }` |
-| `access_granted` | Grant access submitted | `{ duration_days, record_count, doctor_verified }` |
-| `access_revoked` | Revoke button clicked | `{ grant_age_days, records_accessed }` |
-| `onboarding_completed` | Step 5 form submitted | `{ role, time_to_complete_sec }` |
-| `audit_log_viewed` | User navigates to /audit | `{ filter_applied, export_requested }` |
-| `feedback_submitted` | Feedback form submitted | `{ rating, message_length }` |
-| `demo_mode_entered` | ?demo=true query detected | `{ feature_explored }` |
 
 ### Sentry Error Monitoring (Planned)
 
@@ -934,8 +919,7 @@ Purpose:
 All responses are automatically stored in a connected Google Sheet:
 
 👉 Response Spreadsheet
-https://docs.google.com/spreadsheets/d/1pdh-Aq–LX54wjU0HHpVa25rvQ4NpERYpAJQSA-cch8/edit?usp=sharing
-
+https://docs.google.com/spreadsheets/d/1pdh-Aq--LX54wjU0HHpVa25rvQ4NpERYpAJQSA-cch8/edit?usp=sharing
 Purpose:
 
 * Maintain structured onboarding records
