@@ -14,7 +14,7 @@ export const getStellarServer = () => {
 };
 
 export const getSorobanRpc = () => {
-  return new (StellarSdk as any).SorobanRpc.Server(sorobanRpcUrl);
+  return new StellarSdk.rpc.Server(sorobanRpcUrl);
 };
 
 export const getNetworkConfig = () => {
