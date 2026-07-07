@@ -940,7 +940,7 @@ CareVault has been tested with 10+ real users onboarded via Freighter Wallet on 
 
 ## 📸 Screenshots
 
-Screenshots coming soon. Check out the [live demo](https://carevault.vercel.app) to see CareVault in action!
+ Check out the [live demo] ( care-vault-q6sd.vercel.app )   to see CareVault in action!
 
 ### SCREENSHOTS /PREVIEW OF THE PROJECT :
 
