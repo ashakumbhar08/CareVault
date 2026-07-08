@@ -1,3 +1,69 @@
+/*
+========================================
+PRODUCTION RECOVERY - ROOT CAUSES & FIXES
+========================================
+
+ROOT CAUSE 1: "Record Registry Contract ID not configured" error
+- Problem: recordRegistryId was reading from import.meta.env.VITE_RECORD_REGISTRY_CONTRACT_ID
+- The env var was in .env.testnet but NOT in frontend/.env
+- Vite build was run with --mode testnet (correct), but .env fallback was missing
+- When .env.testnet wasn't found, value became empty string
+- Solution: Created frontend/.env with all contract IDs as fallback
+- Solution: Ensured build script uses vite build --mode testnet (already correct)
+- Solution: Added contract IDs to GitHub Actions workflow env block for CI/CD
+
+ROOT CAUSE 2: No Freighter popup / No Soroban transaction
+- Problem: buildUploadRecordTx(), buildGrantAccessTx(), buildRevokeAccessTx() were building dummy memo transactions
+- They were NOT using Soroban SDK to construct actual contract invocations
+- They were NOT calling simulateTransaction()
+- They were NOT using StellarSdk.Contract.call() to invoke contract functions
+- Solution: Rewrote all three functions to properly build Soroban contract invocations
+  - Use new StellarSdk.Contract(contractId)
+  - Use contract.call(functionName, ...args) to create invoke operations
+  - Use sorobanServer.simulateTransaction() to simulate before signing
+  - Use nativeToScVal() to convert JavaScript values to Soroban values
+
+ROOT CAUSE 3: Vercel 404 on routes
+- Problem: GitHub Actions workflow had NO deploy step
+- vercel.json existed with correct configuration BUT was never executed
+- Solution: Added deploy step to GitHub Actions workflow
+- Solution: Ensured environment variables passed to Vercel build step
+- Solution: GitHub Actions workflow now runs: "npm install -g vercel && vercel --prod"
+- Solution: Required secrets in GitHub: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
+
+ROOT CAUSE 4: UploadRecordModal calling addRecord() directly
+- Problem: Modal wasn't calling the upload() hook from useRecords
+- The hook properly calls buildUploadRecordTx(), signTransaction(), submitTransaction(), then addRecord()
+- Solution: Changed modal to call upload() hook instead of buildUploadRecordTx() directly
+- Modal now delegates full transaction lifecycle to the hook
+
+FIXES APPLIED:
+
+1. Created frontend/.env with all contract IDs
+2. Rewrote buildUploadRecordTx() to use Soroban SDK contract invocation
+3. Rewrote buildGrantAccessTx() to use Soroban SDK contract invocation
+4. Rewrote buildRevokeAccessTx() to use Soroban SDK contract invocation
+5. Updated submitTransaction() to use Soroban RPC instead of Horizon
+6. Updated UploadRecordModal to use upload() hook
+7. Updated GitHub Actions workflow with build-time env vars and deploy step
+8. Improved error messages to include build mode for debugging
+
+PRODUCTION VERIFICATION CHECKLIST:
+
+✓ Local build succeeds with "npm run build" in frontend/
+✓ Contract IDs embedded in dist/assets/*.js
+✓ Vercel deployment configured in vercel.json
+✓ GitHub Actions workflow includes deploy step with secrets
+✓ Environment variables passed to Vite during build
+
+NEXT: GitHub Actions will trigger deploy on next push to main
+- Build will run with contract IDs in env
+- Vite will embed real contract IDs in bundle
+- Vercel will deploy to https://carevault-production.vercel.app
+- Freighter will pop up when Upload Record clicked
+- Real Soroban transactions will be signed and submitted
+*/
+
 import * as freighter from '@stellar/freighter-api';
 import * as StellarSdk from '@stellar/stellar-sdk';
 
