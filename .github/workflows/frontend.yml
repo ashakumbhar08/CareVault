@@ -37,6 +37,14 @@ jobs:
       - name: Build
         working-directory: frontend
         run: npm run build
+        env:
+          VITE_STELLAR_NETWORK: testnet
+          VITE_HORIZON_URL: https://horizon-testnet.stellar.org
+          VITE_SOROBAN_RPC_URL: https://soroban-testnet.stellar.org
+          VITE_NETWORK_PASSPHRASE: "Test SDF Network ; September 2015"
+          VITE_RECORD_REGISTRY_CONTRACT_ID: ${{ secrets.VITE_RECORD_REGISTRY_CONTRACT_ID }}
+          VITE_ACCESS_CONTROL_CONTRACT_ID: ${{ secrets.VITE_ACCESS_CONTROL_CONTRACT_ID }}
+          VITE_PINATA_JWT: ${{ secrets.VITE_PINATA_JWT }}
       
       - name: Verify artifacts
         run: |
@@ -50,3 +58,21 @@ jobs:
           name: frontend-dist
           path: frontend/dist/
           retention-days: 5
+      
+      # Deploy to Vercel on main branch
+      - name: Deploy to Vercel
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          npm install -g vercel
+          cd frontend && vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VITE_STELLAR_NETWORK: testnet
+          VITE_HORIZON_URL: https://horizon-testnet.stellar.org
+          VITE_SOROBAN_RPC_URL: https://soroban-testnet.stellar.org
+          VITE_NETWORK_PASSPHRASE: "Test SDF Network ; September 2015"
+          VITE_RECORD_REGISTRY_CONTRACT_ID: ${{ secrets.VITE_RECORD_REGISTRY_CONTRACT_ID }}
+          VITE_ACCESS_CONTROL_CONTRACT_ID: ${{ secrets.VITE_ACCESS_CONTROL_CONTRACT_ID }}
+          VITE_PINATA_JWT: ${{ secrets.VITE_PINATA_JWT }}
+

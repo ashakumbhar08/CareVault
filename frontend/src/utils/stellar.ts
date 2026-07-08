@@ -90,21 +90,44 @@ export const buildUploadRecordTx = async (params: {
   }
 
   if (!recordRegistryId) {
-    throw new Error('Record Registry Contract ID not configured');
+    throw new Error(
+      'VITE_RECORD_REGISTRY_CONTRACT_ID is undefined. Build mode: ' +
+      import.meta.env.MODE +
+      '. Check frontend/.env.testnet and build script.'
+    );
   }
 
   try {
-    const server = getStellarServer();
-    const account = await server.loadAccount(params.patientAddress);
+    const horizonServer = getStellarServer();
+    const sorobanServer = getSorobanRpc();
+    const account = await horizonServer.loadAccount(params.patientAddress);
+
+    const contract = new StellarSdk.Contract(recordRegistryId);
 
     const txBuilder = new StellarSdk.TransactionBuilder(account, {
-      fee: '100',
+      fee: StellarSdk.BASE_FEE,
       networkPassphrase,
       timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 3600 },
     });
 
-    txBuilder.addMemo(StellarSdk.Memo.text('upload_record'));
-    const transaction = txBuilder.build();
+    const ipfsHashBytes = StellarSdk.nativeToScVal(params.ipfsHash, { type: 'bytes' });
+
+    txBuilder.addOperation(
+      contract.call(
+        'upload_record',
+        StellarSdk.nativeToScVal(params.patientAddress, { type: 'address' }),
+        ipfsHashBytes,
+        StellarSdk.nativeToScVal(params.category, { type: 'u32' }),
+        StellarSdk.nativeToScVal(params.fileSizeKb, { type: 'u32' })
+      )
+    );
+
+    const transaction = txBuilder.setTimeout(30).build();
+    const simResult = await sorobanServer.simulateTransaction(transaction);
+
+    if ((simResult as any).error) {
+      throw new Error('Simulation failed: ' + (simResult as any).error);
+    }
 
     return transaction.toXDR();
   } catch (error) {
@@ -125,21 +148,46 @@ export const buildGrantAccessTx = async (params: {
   }
 
   if (!accessControlId) {
-    throw new Error('Access Control Contract ID not configured');
+    throw new Error(
+      'VITE_ACCESS_CONTROL_CONTRACT_ID is undefined. Build mode: ' +
+      import.meta.env.MODE +
+      '. Check frontend/.env.testnet and build script.'
+    );
   }
 
   try {
-    const server = getStellarServer();
-    const account = await server.loadAccount(params.patientAddress);
+    const horizonServer = getStellarServer();
+    const sorobanServer = getSorobanRpc();
+    const account = await horizonServer.loadAccount(params.patientAddress);
+
+    const contract = new StellarSdk.Contract(accessControlId);
 
     const txBuilder = new StellarSdk.TransactionBuilder(account, {
-      fee: '100',
+      fee: StellarSdk.BASE_FEE,
       networkPassphrase,
       timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 3600 },
     });
 
-    txBuilder.addMemo(StellarSdk.Memo.text('grant_access'));
-    const transaction = txBuilder.build();
+    const recordIdsScVal = params.recordIds.map(id =>
+      StellarSdk.nativeToScVal(id, { type: 'u64' })
+    );
+
+    txBuilder.addOperation(
+      contract.call(
+        'grant_access',
+        StellarSdk.nativeToScVal(params.patientAddress, { type: 'address' }),
+        StellarSdk.nativeToScVal(params.doctorAddress, { type: 'address' }),
+        StellarSdk.nativeToScVal(recordIdsScVal),
+        StellarSdk.nativeToScVal(params.expiresAt, { type: 'u64' })
+      )
+    );
+
+    const transaction = txBuilder.setTimeout(30).build();
+    const simResult = await sorobanServer.simulateTransaction(transaction);
+
+    if ((simResult as any).error) {
+      throw new Error('Simulation failed: ' + (simResult as any).error);
+    }
 
     return transaction.toXDR();
   } catch (error) {
@@ -158,21 +206,40 @@ export const buildRevokeAccessTx = async (params: {
   }
 
   if (!accessControlId) {
-    throw new Error('Access Control Contract ID not configured');
+    throw new Error(
+      'VITE_ACCESS_CONTROL_CONTRACT_ID is undefined. Build mode: ' +
+      import.meta.env.MODE +
+      '. Check frontend/.env.testnet and build script.'
+    );
   }
 
   try {
-    const server = getStellarServer();
-    const account = await server.loadAccount(params.patientAddress);
+    const horizonServer = getStellarServer();
+    const sorobanServer = getSorobanRpc();
+    const account = await horizonServer.loadAccount(params.patientAddress);
+
+    const contract = new StellarSdk.Contract(accessControlId);
 
     const txBuilder = new StellarSdk.TransactionBuilder(account, {
-      fee: '100',
+      fee: StellarSdk.BASE_FEE,
       networkPassphrase,
       timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 3600 },
     });
 
-    txBuilder.addMemo(StellarSdk.Memo.text('revoke_access'));
-    const transaction = txBuilder.build();
+    txBuilder.addOperation(
+      contract.call(
+        'revoke_access',
+        StellarSdk.nativeToScVal(params.patientAddress, { type: 'address' }),
+        StellarSdk.nativeToScVal(params.grantId, { type: 'u64' })
+      )
+    );
+
+    const transaction = txBuilder.setTimeout(30).build();
+    const simResult = await sorobanServer.simulateTransaction(transaction);
+
+    if ((simResult as any).error) {
+      throw new Error('Simulation failed: ' + (simResult as any).error);
+    }
 
     return transaction.toXDR();
   } catch (error) {
@@ -197,23 +264,57 @@ export const submitTransaction = async (xdr: string): Promise<{ hash: string; ex
     });
 
     if (signedXdrResponse.error) {
-      throw new Error(`Freighter signature rejected: ${signedXdrResponse.error.message || 'Unknown error'}`);
+      throw new Error(
+        `Freighter signature rejected: ${signedXdrResponse.error.message || 'Unknown error'}`
+      );
     }
 
     if (!signedXdrResponse.signedTxXdr) {
       throw new Error('No signed transaction XDR returned from Freighter');
     }
 
-    const server = getStellarServer();
-    const transaction = StellarSdk.TransactionBuilder.fromXDR(signedXdrResponse.signedTxXdr, networkPassphrase);
-    const result = await server.submitTransaction(transaction as any);
+    const sorobanServer = getSorobanRpc();
+    const transaction = StellarSdk.TransactionBuilder.fromXDR(
+      signedXdrResponse.signedTxXdr,
+      networkPassphrase
+    );
+
+    const sendResult = await sorobanServer.sendTransaction(transaction);
+
+    if (sendResult.status === 'ERROR') {
+      throw new Error(`Transaction submission error`);
+    }
+
+    let pollCount = 0;
+    const maxPolls = 20;
+    let finalStatus = 'PENDING';
+
+    while (pollCount < maxPolls && finalStatus === 'PENDING') {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      const statusResult = await sorobanServer.getTransaction(sendResult.hash);
+      finalStatus = statusResult.status;
+
+      if (finalStatus === 'SUCCESS') {
+        return {
+          hash: sendResult.hash,
+          explorerUrl: `https://stellar.expert/explorer/testnet/tx/${sendResult.hash}`,
+        };
+      } else if (finalStatus === 'FAILED') {
+        throw new Error(`Transaction failed`);
+      }
+
+      pollCount++;
+    }
 
     return {
-      hash: result.hash,
-      explorerUrl: `https://stellar.expert/explorer/testnet/tx/${result.hash}`,
+      hash: sendResult.hash,
+      explorerUrl: `https://stellar.expert/explorer/testnet/tx/${sendResult.hash}`,
     };
   } catch (error) {
-    throw new Error(`Transaction submission failed: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Transaction submission failed: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 };
 
