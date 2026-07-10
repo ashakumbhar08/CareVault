@@ -136,7 +136,6 @@ export const buildUploadRecordTx = async (params: {
     const txBuilder = new StellarSdk.TransactionBuilder(account, {
       fee: SOROBAN_FEE_MULTIPLIER,
       networkPassphrase,
-      timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 3600 },
     });
 
     // Convert IPFS hash string to Uint8Array
@@ -195,7 +194,6 @@ export const buildGrantAccessTx = async (params: {
     const txBuilder = new StellarSdk.TransactionBuilder(account, {
       fee: SOROBAN_FEE_MULTIPLIER,
       networkPassphrase,
-      timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 3600 },
     });
 
     // Convert record IDs array to Soroban Vec<u64>
@@ -254,7 +252,6 @@ export const buildRevokeAccessTx = async (params: {
     const txBuilder = new StellarSdk.TransactionBuilder(account, {
       fee: SOROBAN_FEE_MULTIPLIER,
       networkPassphrase,
-      timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 3600 },
     });
 
     txBuilder.addOperation(
