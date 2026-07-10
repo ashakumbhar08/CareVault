@@ -121,13 +121,7 @@ export const useWallet = () => {
   };
 
   const disconnect = () => {
-    // Step 1: Clear sessionStorage
-    sessionStorage.removeItem('cv_wallet');
-    
-    // Step 2: Clear Zustand store (triggers listeners)
-    clearWallet();
-    
-    // Step 3: Clear local state
+    // Step 1: Clear local state first
     setState({
       address: null,
       balance: '0',
@@ -138,8 +132,18 @@ export const useWallet = () => {
       freighterInstalled: state.freighterInstalled,
     });
     
-    // Step 4: Navigate to landing
-    navigate('/');
+    // Step 2: Clear sessionStorage (cv_wallet key)
+    sessionStorage.removeItem('cv_wallet');
+    
+    // Step 3: Clear Zustand store (triggers global listeners)
+    clearWallet();
+    
+    // Step 4: Clear localStorage and all storage
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Step 5: Navigate to landing
+    navigate('/', { replace: true });
   };
 
   return { ...state, connect, disconnect, checkInstalled, refreshBalance };

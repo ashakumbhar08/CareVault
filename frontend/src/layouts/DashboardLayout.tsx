@@ -1,7 +1,5 @@
 import { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Sidebar } from '../components/ui/Sidebar';
-import { clearWallet } from '../store/appState';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -12,23 +10,10 @@ interface DashboardLayoutProps {
 }
 
 export const DashboardLayout = ({ children, role, walletAddress, onDisconnect, onWalletCleared }: DashboardLayoutProps) => {
-  const navigate = useNavigate();
-
   const handleDisconnect = () => {
-    // Clear React state via hook
+    // Call the disconnect hook callback (from useWallet)
+    // This will handle all the cleanup
     onDisconnect?.();
-    
-    // Clear Zustand store
-    clearWallet();
-    
-    // Clear localStorage
-    localStorage.clear();
-    
-    // Clear sessionStorage
-    sessionStorage.clear();
-    
-    // Navigate to landing
-    navigate('/');
   };
 
   return (
