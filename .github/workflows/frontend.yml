@@ -62,21 +62,3 @@ jobs:
           name: frontend-dist
           path: frontend/dist/
           retention-days: 5
-
-  deploy:
-    name: Deploy to Vercel
-    runs-on: ubuntu-latest
-    needs: ci
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && success()
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Deploy to Vercel (if token available)
-        if: secrets.VERCEL_TOKEN != ''
-        run: |
-          npm install -g vercel@latest
-          cd frontend
-          vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} || echo "Vercel deployment skipped or failed - this is expected in forks"
-        continue-on-error: true
