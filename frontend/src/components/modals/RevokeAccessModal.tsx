@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { X, Check, Loader } from 'lucide-react';
-import { removeGrant, addAuditEntry, getState } from '../../store/appState';
-import { buildRevokeAccessTx, submitTransaction } from '../../utils/stellar';
+import { removeGrant, addAuditEntry } from '../../store/appState';
+import { useAccessGrants } from '../../hooks/useAccessGrants';
+import { useWallet } from '../../hooks/useWallet';
 import { useToast } from '../../hooks/useToast';
 
 interface RevokeAccessModalProps {
@@ -14,8 +15,12 @@ interface RevokeAccessModalProps {
 type ProcessingPhase = 'building' | 'awaiting-signature' | 'submitting' | 'confirming' | 'done';
 
 export const RevokeAccessModal = ({ isOpen, onClose, grantId, doctorAddress }: RevokeAccessModalProps) => {
+  const { address: walletAddress } = useWallet();
+  const { revokeAccess } = useAccessGrants({ walletAddress: walletAddress || undefined });
+  
   const [processingPhase, setProcessingPhase] = useState<ProcessingPhase>('building');
   const [txHash, setTxHash] = useState<string | null>(null);
+  const [explorerUrl, setExplorerUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCloseButton, setShowCloseButton] = useState(false);
@@ -26,6 +31,7 @@ export const RevokeAccessModal = ({ isOpen, onClose, grantId, doctorAddress }: R
   const handleClose = () => {
     setProcessingPhase('building');
     setTxHash(null);
+    setExplorerUrl(null);
     setError(null);
     setIsProcessing(false);
     setShowCloseButton(false);
@@ -39,34 +45,15 @@ export const RevokeAccessModal = ({ isOpen, onClose, grantId, doctorAddress }: R
     setShowCloseButton(false);
 
     try {
-      const state = getState();
-      if (!state.walletAddress) {
+      if (!walletAddress) {
         throw new Error('Wallet not connected');
       }
 
-      // Extract grant ID from UUID (use index)
-      const grantIdNum = parseInt(grantId.split('-')[0], 16) % 1000000;
-
-      // Step 1: Build Soroban transaction
-      setProcessingPhase('building');
-      const xdr = await buildRevokeAccessTx({
-        patientAddress: state.walletAddress,
-        grantId: grantIdNum,
-      });
-
-      // Step 2: Request signature from Freighter
-      setProcessingPhase('awaiting-signature');
-      await new Promise(resolve => setTimeout(resolve, 600));
-
-      // Step 3: Submit transaction
-      setProcessingPhase('submitting');
-      const { hash } = await submitTransaction(xdr);
-      setTxHash(hash);
-
-      // Step 4: Confirm transaction
-      setProcessingPhase('confirming');
-      await new Promise(resolve => setTimeout(resolve, 500));
-
+      // Use the hook's revokeAccess method which handles the full transaction lifecycle
+      const result = await revokeAccess(grantId);
+      
+      setTxHash(result.txHash);
+      setExplorerUrl(result.explorerUrl);
       setProcessingPhase('done');
 
       // Hold success screen for 1 second before showing close button
@@ -185,14 +172,14 @@ export const RevokeAccessModal = ({ isOpen, onClose, grantId, doctorAddress }: R
                   </div>
                 </div>
                 <p className="text-lg font-bold text-success mb-2">Access revoked successfully</p>
-                {txHash && (
+                {txHash && explorerUrl && (
                   <div className="space-y-2 mb-6">
                     <p className="text-xs text-muted font-mono break-all">{txHash}</p>
                     <a
-                      href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
+                      href={explorerUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-accent hover:underline"
+                      className="inline-block text-xs text-accent hover:underline"
                     >
                       View on Stellar Expert →
                     </a>

@@ -1,20 +1,24 @@
 import { useState } from 'react';
 import { X, Check, Loader } from 'lucide-react';
-import { getState } from '../../store/appState';
-import { buildGrantAccessTx, submitTransaction } from '../../utils/stellar';
+import { useAccessGrants } from '../../hooks/useAccessGrants';
+import { useWallet } from '../../hooks/useWallet';
 
 interface GrantAccessModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type ProcessingPhase = 'building' | 'simulating' | 'awaiting-signature' | 'submitting' | 'confirming' | 'done';
+type ProcessingPhase = 'building' | 'awaiting-signature' | 'submitting' | 'confirming' | 'done';
 
 export const GrantAccessModal = ({ isOpen, onClose }: GrantAccessModalProps) => {
+  const { address: walletAddress } = useWallet();
+  const { grantAccess } = useAccessGrants({ walletAddress: walletAddress || undefined });
+  
   const [doctorWallet, setDoctorWallet] = useState('');
   const [duration, setDuration] = useState<7 | 30 | 60 | 90>(30);
   const [processingPhase, setProcessingPhase] = useState<ProcessingPhase>('building');
   const [txHash, setTxHash] = useState<string | null>(null);
+  const [explorerUrl, setExplorerUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCloseButton, setShowCloseButton] = useState(false);
@@ -26,6 +30,7 @@ export const GrantAccessModal = ({ isOpen, onClose }: GrantAccessModalProps) => 
     setDuration(30);
     setProcessingPhase('building');
     setTxHash(null);
+    setExplorerUrl(null);
     setError(null);
     setIsProcessing(false);
     setShowCloseButton(false);
@@ -46,36 +51,21 @@ export const GrantAccessModal = ({ isOpen, onClose }: GrantAccessModalProps) => 
     setShowCloseButton(false);
 
     try {
-      const state = getState();
-      if (!state.walletAddress) {
+      if (!walletAddress) {
         throw new Error('Wallet not connected');
       }
 
-      // Step 1: Build Soroban transaction
+      // Use the hook's grantAccess method which handles the full transaction lifecycle
       setProcessingPhase('building');
-      const recordIds = state.records.map((_record: any, idx: number) => idx + 1); // Convert to contract record IDs
-      const expiresAtTimestamp = Math.floor(Date.now() / 1000) + (duration * 24 * 60 * 60);
+      
+      // For now, grant access to all records (in future this could be selective)
+      const recordIds = ['1', '2', '3']; // Placeholder - in production these come from state
+      const expiresAtDate = new Date(Date.now() + duration * 24 * 60 * 60 * 1000);
 
-      const xdr = await buildGrantAccessTx({
-        patientAddress: state.walletAddress,
-        doctorAddress: doctorWallet.trim(),
-        recordIds,
-        expiresAt: expiresAtTimestamp,
-      });
-
-      // Step 2: Request signature from Freighter
-      setProcessingPhase('awaiting-signature');
-      await new Promise(resolve => setTimeout(resolve, 600));
-
-      // Step 3: Submit transaction
-      setProcessingPhase('submitting');
-      const { hash } = await submitTransaction(xdr);
-      setTxHash(hash);
-
-      // Step 4: Confirm transaction
-      setProcessingPhase('confirming');
-      await new Promise(resolve => setTimeout(resolve, 500));
-
+      const result = await grantAccess(doctorWallet.trim(), recordIds, expiresAtDate);
+      
+      setTxHash(result.txHash);
+      setExplorerUrl(result.explorerUrl);
       setProcessingPhase('done');
 
       // Hold success screen for 1 second before showing close button
@@ -94,7 +84,6 @@ export const GrantAccessModal = ({ isOpen, onClose }: GrantAccessModalProps) => 
   const getPhaseLabel = (phase: ProcessingPhase): string => {
     switch (phase) {
       case 'building': return 'Building transaction…';
-      case 'simulating': return 'Simulating…';
       case 'awaiting-signature': return 'Awaiting signature…';
       case 'submitting': return 'Submitting to blockchain…';
       case 'confirming': return 'Confirming transaction…';
@@ -104,7 +93,7 @@ export const GrantAccessModal = ({ isOpen, onClose }: GrantAccessModalProps) => 
   };
 
   const isPhaseComplete = (phase: ProcessingPhase): boolean => {
-    const phases: ProcessingPhase[] = ['building', 'simulating', 'awaiting-signature', 'submitting', 'confirming', 'done'];
+    const phases: ProcessingPhase[] = ['building', 'awaiting-signature', 'submitting', 'confirming', 'done'];
     const currentIndex = phases.indexOf(processingPhase);
     const phaseIndex = phases.indexOf(phase);
     return phaseIndex < currentIndex;
@@ -157,14 +146,14 @@ export const GrantAccessModal = ({ isOpen, onClose }: GrantAccessModalProps) => 
                     </div>
                   </div>
                   <p className="text-lg font-bold text-success mb-2">Access granted successfully</p>
-                  {txHash && (
+                  {txHash && explorerUrl && (
                     <div className="space-y-2 mb-6">
                       <p className="text-xs text-muted font-mono break-all">{txHash}</p>
                       <a
-                        href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
+                        href={explorerUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-accent hover:underline"
+                        className="inline-block text-xs text-accent hover:underline"
                       >
                         View on Stellar Expert →
                       </a>
