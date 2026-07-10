@@ -26,6 +26,7 @@ ROOT CAUSE 4: Vercel deployment pipeline broken
 
 import * as freighter from '@stellar/freighter-api';
 import * as StellarSdk from '@stellar/stellar-sdk';
+import { assembleTransaction } from '@stellar/stellar-sdk/rpc';
 
 const isDemoMode = () => new URLSearchParams(window.location.search).get('demo') === 'true';
 
@@ -158,7 +159,11 @@ export const buildUploadRecordTx = async (params: {
       throw new Error('Simulation failed: ' + JSON.stringify((simResult as any).error));
     }
 
-    return transaction.toXDR();
+    // Assemble the transaction with simulation results
+    const assembled = assembleTransaction(transaction, simResult as any);
+    const finalTransaction = assembled.build();
+
+    return finalTransaction.toXDR();
   } catch (error) {
     throw new Error(
       `Upload record tx build failed: ${error instanceof Error ? error.message : String(error)}`
@@ -218,7 +223,11 @@ export const buildGrantAccessTx = async (params: {
       throw new Error('Simulation failed: ' + JSON.stringify((simResult as any).error));
     }
 
-    return transaction.toXDR();
+    // Assemble the transaction with simulation results
+    const assembled = assembleTransaction(transaction, simResult as any);
+    const finalTransaction = assembled.build();
+
+    return finalTransaction.toXDR();
   } catch (error) {
     throw new Error(
       `Grant access tx build failed: ${error instanceof Error ? error.message : String(error)}`
@@ -269,7 +278,11 @@ export const buildRevokeAccessTx = async (params: {
       throw new Error('Simulation failed: ' + JSON.stringify((simResult as any).error));
     }
 
-    return transaction.toXDR();
+    // Assemble the transaction with simulation results
+    const assembled = assembleTransaction(transaction, simResult as any);
+    const finalTransaction = assembled.build();
+
+    return finalTransaction.toXDR();
   } catch (error) {
     throw new Error(
       `Revoke access tx build failed: ${error instanceof Error ? error.message : String(error)}`
