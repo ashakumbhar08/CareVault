@@ -4,6 +4,7 @@ import { RecordCategory } from '../../types';
 import { useRecords } from '../../hooks/useRecords';
 import { useWallet } from '../../hooks/useWallet';
 import { useToast } from '../../hooks/useToast';
+import { getState } from '../../store/appState';
 
 interface UploadRecordModalProps {
   isOpen: boolean;
@@ -24,8 +25,12 @@ export const UploadRecordModal = ({ isOpen, onClose }: UploadRecordModalProps) =
   const [processingError, setProcessingError] = useState<string | null>(null);
   const [showCloseButton, setShowCloseButton] = useState(false);
   const { upload } = useRecords();
-  const { address } = useWallet();
+  const { address: walletHookAddress } = useWallet();
   const { showToast } = useToast();
+  
+  // Get address from global state as fallback/primary source
+  const globalState = getState();
+  const address = globalState.walletAddress || walletHookAddress;
 
   if (!isOpen) return null;
 

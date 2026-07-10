@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, Check, Loader } from 'lucide-react';
 import { useAccessGrants } from '../../hooks/useAccessGrants';
 import { useWallet } from '../../hooks/useWallet';
+import { getState } from '../../store/appState';
 
 interface GrantAccessModalProps {
   isOpen: boolean;
@@ -11,7 +12,9 @@ interface GrantAccessModalProps {
 type ProcessingPhase = 'building' | 'awaiting-signature' | 'submitting' | 'confirming' | 'done';
 
 export const GrantAccessModal = ({ isOpen, onClose }: GrantAccessModalProps) => {
-  const { address: walletAddress } = useWallet();
+  const { address: walletHookAddress } = useWallet();
+  const globalState = getState();
+  const walletAddress = globalState.walletAddress || walletHookAddress;
   const { grantAccess } = useAccessGrants({ walletAddress: walletAddress || undefined });
   
   const [doctorWallet, setDoctorWallet] = useState('');

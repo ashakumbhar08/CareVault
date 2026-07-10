@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, Check, Loader } from 'lucide-react';
-import { removeGrant, addAuditEntry } from '../../store/appState';
+import { removeGrant, addAuditEntry, getState } from '../../store/appState';
 import { useAccessGrants } from '../../hooks/useAccessGrants';
 import { useWallet } from '../../hooks/useWallet';
 import { useToast } from '../../hooks/useToast';
@@ -15,7 +15,9 @@ interface RevokeAccessModalProps {
 type ProcessingPhase = 'building' | 'awaiting-signature' | 'submitting' | 'confirming' | 'done';
 
 export const RevokeAccessModal = ({ isOpen, onClose, grantId, doctorAddress }: RevokeAccessModalProps) => {
-  const { address: walletAddress } = useWallet();
+  const { address: walletHookAddress } = useWallet();
+  const globalState = getState();
+  const walletAddress = globalState.walletAddress || walletHookAddress;
   const { revokeAccess } = useAccessGrants({ walletAddress: walletAddress || undefined });
   
   const [processingPhase, setProcessingPhase] = useState<ProcessingPhase>('building');

@@ -7,10 +7,10 @@ import {
 } from '../utils/stellar';
 import { useIPFS } from './useIPFS';
 import { useToast } from './useToast';
-import { useWallet } from './useWallet';
 import { MedicalRecord, RecordCategory } from '../types';
 import { logInteraction } from '../utils/logInteraction';
 import { track } from '../utils/analytics';
+import { getState } from '../store/appState';
 
 interface UseRecordsOptions {
   walletAddress?: string;
@@ -24,16 +24,20 @@ export const useRecords = (options: UseRecordsOptions = {}) => {
   const [error, setError] = useState<string | null>(null);
   const { upload: uploadToIPFS } = useIPFS();
   const { showToast } = useToast();
-  useWallet();
+  
+  // Import getState to access global wallet address
+  // (globalState already imported at top, but make explicit here for clarity)
+  const globalState = getState();
+  const effectiveWalletAddress = walletAddress || globalState.walletAddress;
 
   const fetchRecords = async () => {
-    if (!walletAddress || !enabled) return;
+    if (!effectiveWalletAddress || !enabled) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const stellarRecords = await readRecords(walletAddress);
+      const stellarRecords = await readRecords(effectiveWalletAddress);
       const mappedRecords: MedicalRecord[] = stellarRecords.map((r: StellarMedicalRecord) => ({
         id: String(r.record_id),
         fileName: `Record_${r.record_id}`,
@@ -59,10 +63,10 @@ export const useRecords = (options: UseRecordsOptions = {}) => {
 
   useEffect(() => {
     fetchRecords();
-  }, [walletAddress, enabled]);
+  }, [effectiveWalletAddress, enabled]);
 
   const upload = async (file: File, category: RecordCategory) => {
-    if (!walletAddress) {
+    if (!effectiveWalletAddress) {
       throw new Error('Wallet not connected');
     }
 
@@ -72,7 +76,7 @@ export const useRecords = (options: UseRecordsOptions = {}) => {
 
       showToast('info', 'Encrypting and uploading...');
 
-      const { ipfsHash } = await uploadToIPFS(file, walletAddress);
+      const { ipfsHash } = await uploadToIPFS(file, effectiveWalletAddress);
 
       showToast('info', 'Creating blockchain transaction...');
 
@@ -80,7 +84,7 @@ export const useRecords = (options: UseRecordsOptions = {}) => {
       const fileSizeKb = Math.ceil(file.size / 1024);
 
       const xdr = await buildUploadRecordTx({
-        patientAddress: walletAddress,
+        patientAddress: effectiveWalletAddress,
         ipfsHash,
         category: categoryNumber,
         fileSizeKb,
@@ -90,7 +94,7 @@ export const useRecords = (options: UseRecordsOptions = {}) => {
 
       try {
         await logInteraction({
-          walletAddress,
+          walletAddress: effectiveWalletAddress,
           action: 'upload_record',
           txHash: hash,
           explorerUrl,
