@@ -1,6 +1,8 @@
 # CareVault
 
-### VERCEL DEPLOYMENT LINK :  care-vault-q6sd.vercel.app
+### VERCEL DEPLOYMENT LINK :  care-vault-eta.vercel.app
+
+
 
 
 > *Decentralized Healthcare Record Management — Built on Stellar Blockchain*
@@ -32,8 +34,12 @@
 ---
 ## Vercel Deployment SS:
 
-<img width="1470" height="956" alt="Screenshot 2026-06-28 at 12 48 44 AM" src="https://github.com/user-attachments/assets/b643a96b-cbb5-4d4c-9f8b-d167aff477d4" />
-<img width="1470" height="956" alt="Screenshot 2026-06-28 at 12 48 57 AM" src="https://github.com/user-attachments/assets/e7fa6481-e211-479a-ba2e-079c218fdf4b" />
+<img width="1447" height="799" alt="Screenshot 2026-07-11 at 7 52 18 PM" src="https://github.com/user-attachments/assets/a381014b-174c-4d11-ba9e-ec45948c1388" />
+
+
+<img width="1447" height="799" alt="Screenshot 2026-07-11 at 7 50 33 PM" src="https://github.com/user-attachments/assets/d8080e2f-16a9-45fe-a276-a38f28cfa01f" />
+
+
 
 ---
 
