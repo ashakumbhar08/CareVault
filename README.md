@@ -87,7 +87,7 @@ Patients remain the sole owners of their records while doctors receive **time-bo
 
 | Resource | Link |
 |-----------|------|
-| 🌐 Live Application | |  https://care-vault-eta.vercel.app |
+| 🌐 Live Application | https://care-vault-eta.vercel.app |
 | 📂 GitHub Repository | https://github.com/ashakumbhar08/CareVault |
 | 🌍 Stellar Explorer | https://stellar.expert/explorer/testnet |
 | 🔐 Freighter Wallet | https://www.freighter.app |
