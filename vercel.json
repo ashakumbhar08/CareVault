@@ -1,5 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "cd frontend && npm run build",
+  "installCommand": "cd frontend && npm ci",
+  "outputDirectory": "frontend/dist",
+  "framework": "vite",
   "env": {
     "VITE_STELLAR_NETWORK": "testnet",
     "VITE_HORIZON_URL": "https://horizon-testnet.stellar.org",
