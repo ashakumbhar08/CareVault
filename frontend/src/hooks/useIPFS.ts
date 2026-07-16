@@ -32,15 +32,20 @@ export const useIPFS = () => {
 
         setState((prev) => ({ ...prev, progress: 50 }));
 
+        const jwtToken = import.meta.env.VITE_PINATA_JWT;
+
         const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_PINATA_JWT}`,
+            Authorization: `Bearer ${jwtToken}`,
           },
           body: formData,
         });
 
-        if (!response.ok) throw new Error('Pinata upload failed');
+        if (!response.ok) {
+          const errorBody = await response.text();
+          throw new Error(`Pinata upload failed: HTTP ${response.status} - ${errorBody}`);
+        }
 
         setState((prev) => ({ ...prev, progress: 80 }));
 
