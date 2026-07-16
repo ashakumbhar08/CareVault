@@ -1,6 +1,6 @@
 # CareVault
 
-### VERCEL DEPLOYMENT LINK :     care-vault-eta.vercel.app  
+### VERCEL DEPLOYMENT LINK :   https://care-vault-eta.vercel.app
 
 
 
