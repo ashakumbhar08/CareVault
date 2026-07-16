@@ -141,20 +141,36 @@ export const buildUploadRecordTx = async (params: {
 
     // Convert IPFS hash string to bytes ScVal
     const hashBytes = new TextEncoder().encode(params.ipfsHash);
+    console.log('[DEBUG] hashBytes length:', hashBytes.length, 'type:', typeof hashBytes);
     const hashScVal = StellarSdk.xdr.ScVal.scvBytes(hashBytes);
+    console.log('[DEBUG] hashScVal created');
 
+    // Create Address object from string (not passing raw string to nativeToScVal)
+    const patientAddr = StellarSdk.Address.fromString(params.patientAddress);
+    console.log('[DEBUG] patientAddr created from string');
+    const patientScVal = StellarSdk.nativeToScVal(patientAddr, { type: 'address' });
+    console.log('[DEBUG] patientScVal created');
+    const categoryScVal = StellarSdk.nativeToScVal(params.category, { type: 'u32' });
+    console.log('[DEBUG] categoryScVal created for:', params.category);
+    const fileSizeScVal = StellarSdk.nativeToScVal(params.fileSizeKb, { type: 'u32' });
+    console.log('[DEBUG] fileSizeScVal created for:', params.fileSizeKb);
+
+    console.log('[DEBUG] calling contract.call...');
     txBuilder.addOperation(
       contract.call(
         'upload_record',
-        StellarSdk.nativeToScVal(params.patientAddress, { type: 'address' }),
+        patientScVal,
         hashScVal,
-        StellarSdk.nativeToScVal(params.category, { type: 'u32' }),
-        StellarSdk.nativeToScVal(params.fileSizeKb, { type: 'u32' })
+        categoryScVal,
+        fileSizeScVal
       )
     );
+    console.log('[DEBUG] contract.call completed');
 
     const transaction = txBuilder.setTimeout(30).build();
+    console.log('[DEBUG] transaction built');
     const simResult = await sorobanServer.simulateTransaction(transaction);
+    console.log('[DEBUG] simulation result:', (simResult as any).error ? 'ERROR' : 'SUCCESS');
 
     if ((simResult as any).error) {
       throw new Error('Simulation failed: ' + JSON.stringify((simResult as any).error));
