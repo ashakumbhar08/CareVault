@@ -139,15 +139,14 @@ export const buildUploadRecordTx = async (params: {
       networkPassphrase,
     });
 
-    // Convert IPFS hash string to bytes ScVal
+    // Convert IPFS hash string to bytes for Soroban
     const hashBytes = new TextEncoder().encode(params.ipfsHash);
-    const hashScVal = StellarSdk.xdr.ScVal.scvBytes(hashBytes);
 
     txBuilder.addOperation(
       contract.call(
         'upload_record',
         StellarSdk.nativeToScVal(params.patientAddress, { type: 'address' }),
-        hashScVal,
+        StellarSdk.nativeToScVal(hashBytes, { type: 'bytes' }),
         StellarSdk.nativeToScVal(params.category, { type: 'u32' }),
         StellarSdk.nativeToScVal(params.fileSizeKb, { type: 'u32' })
       )
