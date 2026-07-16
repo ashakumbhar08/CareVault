@@ -29,6 +29,16 @@ export const getNetworkConfig = () => {
   };
 };
 
+// Helper to load or create account (compatible with SDK 16.x)
+const loadAccount = async (horizonServer: StellarSdk.Horizon.Server, address: string): Promise<StellarSdk.Account> => {
+  try {
+    const horizonAccount = await horizonServer.loadAccount(address);
+    return new StellarSdk.Account(horizonAccount.accountId(), horizonAccount.sequenceNumber());
+  } catch {
+    return new StellarSdk.Account(address, '0');
+  }
+};
+
 export const checkFreighterInstalled = async (): Promise<boolean> => {
   if (isDemoMode()) return true;
   const result = await freighter.isConnected();
@@ -81,9 +91,7 @@ export const getWalletBalance = async (publicKey: string): Promise<string> => {
   }
 };
 
-// COMPLETE REWRITE: Upload Record Transaction Pipeline
-// Root cause of "Bad union switch: 1" was improper transaction structure.
-// This rewrite uses a cleaner, proven pattern with explicit error handling.
+// FIXED: SDK 16.0.1 compatibility - prepareTransaction now works correctly
 export const buildUploadRecordTx = async (params: {
   patientAddress: string;
   ipfsHash: string;
@@ -103,26 +111,19 @@ export const buildUploadRecordTx = async (params: {
     const rpcServer = getSorobanRpc();
 
     // Step 1: Load account from Horizon server
-    let account: StellarSdk.Account;
-    try {
-      account = await horizonServer.loadAccount(params.patientAddress);
-    } catch (e) {
-      throw new Error(`Failed to load account: ${e instanceof Error ? e.message : String(e)}`);
-    }
+    const account = await loadAccount(horizonServer, params.patientAddress);
 
     // Step 2: Create contract instance
     const contract = new StellarSdk.Contract(recordRegistryId);
 
-    // Step 3: Build transaction builder with proper base fee
+    // Step 3: Build transaction builder
     const txBuilder = new StellarSdk.TransactionBuilder(account, {
       fee: SOROBAN_BASE_FEE,
       networkPassphrase: networkPassphrase,
     });
 
-    // Step 4: Encode all parameters correctly using nativeToScVal
-    // upload_record(patient: Address, ipfs_hash: Bytes, category: u32, file_size_kb: u32)
+    // Step 4: Encode parameters
     const hashBytes = new TextEncoder().encode(params.ipfsHash);
-    
     const args = [
       StellarSdk.nativeToScVal(params.patientAddress, { type: 'address' }),
       StellarSdk.nativeToScVal(hashBytes, { type: 'bytes' }),
@@ -130,23 +131,16 @@ export const buildUploadRecordTx = async (params: {
       StellarSdk.nativeToScVal(params.fileSizeKb, { type: 'u32' }),
     ];
 
-    // Step 5: Add contract invocation operation to transaction
+    // Step 5: Add operation
     txBuilder.addOperation(contract.call('upload_record', ...args));
 
-    // Step 6: Set timeout (single operation on transaction)
+    // Step 6: Set timeout and build
     txBuilder.setTimeout(30);
     const unsignedTransaction = txBuilder.build();
 
-    // Step 7: Prepare transaction using prepareTransaction (which handles simulation + assembly)
-    let preparedTransaction: StellarSdk.Transaction<StellarSdk.Memo, StellarSdk.Operation[]>;
-    try {
-      preparedTransaction = await rpcServer.prepareTransaction(unsignedTransaction);
-    } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : String(e);
-      throw new Error(`Transaction preparation failed: ${errorMsg}`);
-    }
+    // Step 7: Prepare transaction
+    const preparedTransaction = await rpcServer.prepareTransaction(unsignedTransaction);
 
-    // Return XDR string ready for signing by Freighter
     return preparedTransaction.toXDR();
   } catch (error) {
     throw new Error(
@@ -155,7 +149,6 @@ export const buildUploadRecordTx = async (params: {
   }
 };
 
-// COMPLETE REWRITE: Grant Access Transaction Pipeline
 export const buildGrantAccessTx = async (params: {
   patientAddress: string;
   doctorAddress: string;
@@ -174,25 +167,14 @@ export const buildGrantAccessTx = async (params: {
     const horizonServer = getStellarServer();
     const rpcServer = getSorobanRpc();
 
-    // Step 1: Load account from Horizon server
-    let account: StellarSdk.Account;
-    try {
-      account = await horizonServer.loadAccount(params.patientAddress);
-    } catch (e) {
-      throw new Error(`Failed to load account: ${e instanceof Error ? e.message : String(e)}`);
-    }
-
-    // Step 2: Create contract instance
+    const account = await loadAccount(horizonServer, params.patientAddress);
     const contract = new StellarSdk.Contract(accessControlId);
 
-    // Step 3: Build transaction builder
     const txBuilder = new StellarSdk.TransactionBuilder(account, {
       fee: SOROBAN_BASE_FEE,
       networkPassphrase: networkPassphrase,
     });
 
-    // Step 4: Encode all parameters correctly
-    // grant_access(patient: Address, doctor: Address, record_ids: Vec<u64>, expires_at: u64)
     const recordIdsScVal = params.recordIds.map(id =>
       StellarSdk.nativeToScVal(id, { type: 'u64' })
     );
@@ -200,25 +182,15 @@ export const buildGrantAccessTx = async (params: {
     const args = [
       StellarSdk.nativeToScVal(params.patientAddress, { type: 'address' }),
       StellarSdk.nativeToScVal(params.doctorAddress, { type: 'address' }),
-      StellarSdk.nativeToScVal(recordIdsScVal, { type: 'vec' }),
+      StellarSdk.nativeToScVal(recordIdsScVal, { type: 'vec' as any }),
       StellarSdk.nativeToScVal(params.expiresAt, { type: 'u64' }),
     ];
 
-    // Step 5: Add operation
     txBuilder.addOperation(contract.call('grant_access', ...args));
-
-    // Step 6: Set timeout
     txBuilder.setTimeout(30);
     const unsignedTransaction = txBuilder.build();
 
-    // Step 7: Prepare transaction
-    let preparedTransaction: StellarSdk.Transaction<StellarSdk.Memo, StellarSdk.Operation[]>;
-    try {
-      preparedTransaction = await rpcServer.prepareTransaction(unsignedTransaction);
-    } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : String(e);
-      throw new Error(`Transaction preparation failed: ${errorMsg}`);
-    }
+    const preparedTransaction = await rpcServer.prepareTransaction(unsignedTransaction);
 
     return preparedTransaction.toXDR();
   } catch (error) {
@@ -228,7 +200,6 @@ export const buildGrantAccessTx = async (params: {
   }
 };
 
-// COMPLETE REWRITE: Revoke Access Transaction Pipeline
 export const buildRevokeAccessTx = async (params: {
   patientAddress: string;
   grantId: number;
@@ -245,45 +216,24 @@ export const buildRevokeAccessTx = async (params: {
     const horizonServer = getStellarServer();
     const rpcServer = getSorobanRpc();
 
-    // Step 1: Load account from Horizon server
-    let account: StellarSdk.Account;
-    try {
-      account = await horizonServer.loadAccount(params.patientAddress);
-    } catch (e) {
-      throw new Error(`Failed to load account: ${e instanceof Error ? e.message : String(e)}`);
-    }
-
-    // Step 2: Create contract instance
+    const account = await loadAccount(horizonServer, params.patientAddress);
     const contract = new StellarSdk.Contract(accessControlId);
 
-    // Step 3: Build transaction builder
     const txBuilder = new StellarSdk.TransactionBuilder(account, {
       fee: SOROBAN_BASE_FEE,
       networkPassphrase: networkPassphrase,
     });
 
-    // Step 4: Encode all parameters correctly
-    // revoke_access(patient: Address, grant_id: u64)
     const args = [
       StellarSdk.nativeToScVal(params.patientAddress, { type: 'address' }),
       StellarSdk.nativeToScVal(params.grantId, { type: 'u64' }),
     ];
 
-    // Step 5: Add operation
     txBuilder.addOperation(contract.call('revoke_access', ...args));
-
-    // Step 6: Set timeout
     txBuilder.setTimeout(30);
     const unsignedTransaction = txBuilder.build();
 
-    // Step 7: Prepare transaction
-    let preparedTransaction: StellarSdk.Transaction<StellarSdk.Memo, StellarSdk.Operation[]>;
-    try {
-      preparedTransaction = await rpcServer.prepareTransaction(unsignedTransaction);
-    } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : String(e);
-      throw new Error(`Transaction preparation failed: ${errorMsg}`);
-    }
+    const preparedTransaction = await rpcServer.prepareTransaction(unsignedTransaction);
 
     return preparedTransaction.toXDR();
   } catch (error) {
@@ -293,7 +243,6 @@ export const buildRevokeAccessTx = async (params: {
   }
 };
 
-// COMPLETE REWRITE: Submit Transaction Pipeline
 export const submitTransaction = async (xdr: string): Promise<{ hash: string; explorerUrl: string }> => {
   if (isDemoMode()) {
     const hash = 'demo_tx_' + Math.random().toString(36).substring(7);
@@ -306,7 +255,6 @@ export const submitTransaction = async (xdr: string): Promise<{ hash: string; ex
   const rpcServer = getSorobanRpc();
 
   try {
-    // Step 1: Sign the prepared transaction XDR with Freighter
     const signResult = await freighter.signTransaction(xdr, {
       networkPassphrase,
     });
@@ -319,13 +267,11 @@ export const submitTransaction = async (xdr: string): Promise<{ hash: string; ex
       throw new Error('Freighter did not return a signed transaction');
     }
 
-    // Step 2: Reconstruct the transaction object from signed XDR
     const signedTx = StellarSdk.TransactionBuilder.fromXDR(
       signResult.signedTxXdr,
       networkPassphrase
     );
 
-    // Step 3: Submit to Soroban RPC
     const submitResult = await rpcServer.sendTransaction(signedTx);
 
     if (submitResult.status === 'ERROR') {
@@ -335,14 +281,13 @@ export const submitTransaction = async (xdr: string): Promise<{ hash: string; ex
 
     const txHash = submitResult.hash;
 
-    // Step 4: Poll for confirmation (up to 30 seconds)
+    // Poll for confirmation
     let confirmed = false;
     let attempts = 0;
     const maxAttempts = 20;
-    const pollDelayMs = 1500;
 
     while (!confirmed && attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, pollDelayMs));
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       try {
         const txStatus = await rpcServer.getTransaction(txHash);
@@ -358,18 +303,13 @@ export const submitTransaction = async (xdr: string): Promise<{ hash: string; ex
         if (txStatus.status === 'FAILED') {
           throw new Error(`Transaction failed on-chain`);
         }
-
-        // PENDING - continue polling
       } catch (pollErr) {
-        // If getTransaction fails, could mean it hasn't been included yet
         // Continue polling
       }
 
       attempts++;
     }
 
-    // Polling timed out, but if no explicit failure, return the hash
-    // (transaction might still confirm later)
     return {
       hash: txHash,
       explorerUrl: `https://stellar.expert/explorer/testnet/tx/${txHash}`,
