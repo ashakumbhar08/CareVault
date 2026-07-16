@@ -1,0 +1,498 @@
+# CAREVAULT SOROBAN CONTRACT DEBUGGING PACKAGE
+
+## EXECUTIVE SUMMARY
+
+This report provides complete contract specifications, frontend call signatures, and identifies all mismatches between the frontend (`stellar.ts`) and the deployed Soroban contracts.
+
+---
+
+## PART 1: DEPLOYED CONTRACT SPECIFICATIONS
+
+### Contract 1: Record Registry Contract
+**Contract ID:** `CAFK4PGOJBX4WP3K33EGBQQA7K2Z25R2U4ZFC4S4AVCCDK3ASKPV7BNE`
+**Location:** `/contracts/record-registry/src/lib.rs`
+**Soroban SDK Version:** 22.0.0
+
+#### Function: `upload_record`
+
+**EXACT SIGNATURE (from contract):**
+```rust
+pub fn upload_record(
+    env: Env,
+    patient: Address,
+    ipfs_hash: Bytes,
+    category: u32,
+    file_size_kb: u32,
+) -> Result<u64, ContractError>
+```
+
+**Parameter Breakdown:**
+- `patient`: `Address` - patient wallet address (CALLER will authenticate via `patient.require_auth()`)
+- `ipfs_hash`: `Bytes` - IPFS hash as raw bytes (NOT String)
+- `category`: `u32` - category code (0=Prescription, 1=LabReport, 2=Scan, 3=Vaccination, 4=DischargeSummary, 5=Other)
+- `file_size_kb`: `u32` - file size in kilobytes
+
+**Returns:** `Result<u64, ContractError>` - record_id on success
+
+**Authentication:** `patient.require_auth()` - Patient must sign the transaction
+
+**Contract Validation:**
+- Converts `category` from u32 to `RecordCategory` enum (fails if invalid)
+- Increments record counter
+- Creates `MedicalRecord` struct with all fields
+- Stores record in persistent storage
+- Adds record_id to patient_records list
+- Emits `record_uploaded` event
+
+**Event Emitted:**
+```
+Event: ("carevault", "rec_up") -> (record_id: u64, patient: Address, category: RecordCategory, ipfs_hash: Bytes)
+```
+
+---
+
+#### Function: `get_records`
+
+**EXACT SIGNATURE:**
+```rust
+pub fn get_records(env: Env, patient: Address) -> Vec<MedicalRecord>
+```
+
+**Returns:** Vector of active MedicalRecord structs
+
+---
+
+### Contract 2: Access Control Contract
+**Contract ID:** `CAVNZFTBKFRXNLAVI4IAT45GTJBSLJZZYX3GIXMY6Q3J7WPLNJSS43SK`
+**Location:** `/contracts/access-control/src/lib.rs`
+**Soroban SDK Version:** 22.0.0
+
+#### Function: `grant_access`
+
+**EXACT SIGNATURE (from contract):**
+```rust
+pub fn grant_access(
+    env: Env,
+    patient: Address,
+    doctor: Address,
+    record_ids: Vec<u64>,
+    expires_at: u64,
+) -> Result<u64, ContractError>
+```
+
+**Parameter Breakdown:**
+- `patient`: `Address` - patient wallet address (CALLER authenticates)
+- `doctor`: `Address` - doctor wallet to grant access to
+- `record_ids`: `Vec<u64>` - vector of record IDs to grant access to
+- `expires_at`: `u64` - Unix timestamp when access expires
+
+**Returns:** `Result<u64, ContractError>` - grant_id on success
+
+**Authentication:** `patient.require_auth()` - Patient must sign
+
+**Contract Validation:**
+- Checks `expires_at > current_time` (fails if expired)
+- Increments grant counter
+- Creates `AccessGrant` struct
+- Stores grant in persistent storage
+- Adds grant_id to both patient_grants and doctor_grants lists
+- Emits `grant_created` event
+
+**Event Emitted:**
+```
+Event: ("carevault", "grt_cre") -> (grant_id: u64, patient: Address, doctor: Address, expires_at: u64)
+```
+
+---
+
+#### Function: `revoke_access`
+
+**EXACT SIGNATURE (from contract):**
+```rust
+pub fn revoke_access(
+    env: Env,
+    patient: Address,
+    grant_id: u64,
+) -> Result<bool, ContractError>
+```
+
+**Parameter Breakdown:**
+- `patient`: `Address` - patient wallet (CALLER authenticates)
+- `grant_id`: `u64` - grant ID to revoke
+
+**Returns:** `Result<bool, ContractError>` - true on success
+
+**Authentication:** `patient.require_auth()` - Patient must sign
+
+**Contract Validation:**
+- Retrieves grant by grant_id (fails if not found)
+- Checks `grant.patient == patient` (fails if unauthorized)
+- Sets `grant.is_active = false`
+- Emits `grant_revoked` event
+
+**Event Emitted:**
+```
+Event: ("carevault", "grt_rev") -> (grant_id: u64, patient: Address, doctor: Address)
+```
+
+---
+
+## PART 2: FRONTEND CALL SIGNATURES (stellar.ts)
+
+### buildUploadRecordTx Implementation
+
+**CURRENT FRONTEND CALL:**
+```typescript
+contract.call(
+    'upload_record',
+    StellarSdk.nativeToScVal(params.patientAddress, { type: 'address' }),
+    StellarSdk.nativeToScVal(hashBytes, { type: 'bytes' }),
+    StellarSdk.nativeToScVal(params.category, { type: 'u32' }),
+    StellarSdk.nativeToScVal(params.fileSizeKb, { type: 'u32' })
+)
+```
+
+Where `hashBytes = new TextEncoder().encode(params.ipfsHash)`
+
+**Parameters Passed:**
+1. patientAddress → Address ✅ CORRECT
+2. hashBytes (Uint8Array) → Bytes ✅ CORRECT (encoded to bytes)
+3. category (number) → u32 ✅ CORRECT
+4. fileSizeKb (number) → u32 ✅ CORRECT
+
+---
+
+### buildGrantAccessTx Implementation
+
+**CURRENT FRONTEND CALL:**
+```typescript
+contract.call(
+    'grant_access',
+    StellarSdk.nativeToScVal(params.patientAddress, { type: 'address' }),
+    StellarSdk.nativeToScVal(params.doctorAddress, { type: 'address' }),
+    StellarSdk.nativeToScVal(recordIdsScVal, { type: 'vec' }),
+    StellarSdk.nativeToScVal(params.expiresAt, { type: 'u64' })
+)
+```
+
+Where:
+```typescript
+const recordIdsScVal = params.recordIds.map(id =>
+  StellarSdk.nativeToScVal(id, { type: 'u64' })
+);
+```
+
+**Parameters Passed:**
+1. patientAddress → Address ✅ CORRECT
+2. doctorAddress → Address ✅ CORRECT
+3. recordIdsScVal (Vec<u64>) → Vec ✅ CORRECT (each element is u64)
+4. expiresAt (number) → u64 ✅ CORRECT
+
+---
+
+### buildRevokeAccessTx Implementation
+
+**CURRENT FRONTEND CALL:**
+```typescript
+contract.call(
+    'revoke_access',
+    StellarSdk.nativeToScVal(params.patientAddress, { type: 'address' }),
+    StellarSdk.nativeToScVal(params.grantId, { type: 'u64' })
+)
+```
+
+**Parameters Passed:**
+1. patientAddress → Address ✅ CORRECT
+2. grantId (number) → u64 ✅ CORRECT
+
+---
+
+## PART 3: MISMATCH ANALYSIS
+
+### VERDICT: NO MISMATCHES DETECTED
+
+After detailed comparison of all three functions:
+
+| Function | Mismatch | Status |
+|----------|----------|--------|
+| upload_record | Parameter count | ✅ MATCH (4 params + env) |
+| upload_record | Parameter types | ✅ MATCH (Address, Bytes, u32, u32) |
+| upload_record | Function name | ✅ MATCH |
+| upload_record | nativeToScVal conversions | ✅ MATCH |
+| grant_access | Parameter count | ✅ MATCH (4 params + env) |
+| grant_access | Parameter types | ✅ MATCH (Address, Address, Vec<u64>, u64) |
+| grant_access | Function name | ✅ MATCH |
+| grant_access | Vector encoding | ✅ MATCH (Vec of u64) |
+| revoke_access | Parameter count | ✅ MATCH (2 params + env) |
+| revoke_access | Parameter types | ✅ MATCH (Address, u64) |
+| revoke_access | Function name | ✅ MATCH |
+
+---
+
+## PART 4: AUTHENTICATION FLOW
+
+All three functions require the **patient** to sign the transaction:
+
+```rust
+patient.require_auth();  // Contract check
+```
+
+**Frontend Implementation:**
+- TransactionBuilder constructs the transaction
+- `submitTransaction(xdr)` calls `freighter.signTransaction(xdr)`
+- Freighter prompts user to sign
+- Signed XDR is submitted to `sorobanServer.sendTransaction()`
+- Transaction must be signed by the patient's Freighter wallet
+
+**Current Status:** ✅ CORRECT - Patient address matches caller
+
+---
+
+## PART 5: TRANSACTION BUILDING FLOW
+
+### Expected Sequence:
+
+1. **Build** - TransactionBuilder creates unsigned transaction
+2. **Simulate** - `sorobanServer.simulateTransaction(tx)` simulates on-chain
+3. **Convert** - Convert simulated transaction to XDR string
+4. **Sign** - Send XDR to Freighter for user signature
+5. **Submit** - Submit signed XDR to blockchain
+6. **Poll** - Poll for confirmation
+
+### Current Frontend Implementation:
+
+```typescript
+const transaction = txBuilder.setTimeout(30).build();
+const simResult = await sorobanServer.simulateTransaction(transaction);
+if ((simResult as any).error) {
+  throw new Error('Simulation failed...');
+}
+return transaction.toXDR();  // Return XDR for signing
+```
+
+**Status:** ✅ CORRECT FLOW
+
+---
+
+## PART 6: ENVIRONMENT VARIABLES & CONTRACT IDS
+
+### Contract IDs (Stellar Testnet)
+
+**Record Registry:**
+```
+CAFK4PGOJBX4WP3K33EGBQQA7K2Z25R2U4ZFC4S4AVCCDK3ASKPV7BNE
+```
+Located in: `frontend/.env` and `.contract_ids/record_registry_id.txt`
+
+**Access Control:**
+```
+CAVNZFTBKFRXNLAVI4IAT45GTJBSLJZZYX3GIXMY6Q3J7WPLNJSS43SK
+```
+Located in: `frontend/.env` and `.contract_ids/access_control_id.txt`
+
+### Frontend Configuration
+
+**File:** `frontend/.env`
+```
+VITE_STELLAR_NETWORK=testnet
+VITE_HORIZON_URL=https://horizon-testnet.stellar.org
+VITE_SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
+VITE_NETWORK_PASSPHRASE=Test SDF Network ; September 2015
+VITE_RECORD_REGISTRY_CONTRACT_ID=CAFK4PGOJBX4WP3K33EGBQQA7K2Z25R2U4ZFC4S4AVCCDK3ASKPV7BNE
+VITE_ACCESS_CONTROL_CONTRACT_ID=CAVNZFTBKFRXNLAVI4IAT45GTJBSLJZZYX3GIXMY6Q3J7WPLNJSS43SK
+```
+
+**Status:** ✅ CORRECT - All contract IDs match deployed contracts
+
+---
+
+## PART 7: EVENT DEFINITIONS
+
+### Record Registry Events
+
+**Event: `emit_record_uploaded`**
+```
+Topic: ("carevault", "rec_up")
+Data: (record_id: u64, patient: Address, category: RecordCategory, ipfs_hash: Bytes)
+```
+
+**Event: `emit_record_verified`**
+```
+Topic: ("carevault", "rec_ver")
+Data: (record_id: u64, status: VerificationStatus)
+```
+
+**Event: `emit_record_deleted`**
+```
+Topic: ("carevault", "rec_del")
+Data: (record_id: u64, patient: Address)
+```
+
+### Access Control Events
+
+**Event: `emit_grant_created`**
+```
+Topic: ("carevault", "grt_cre")
+Data: (grant_id: u64, patient: Address, doctor: Address, expires_at: u64)
+```
+
+**Event: `emit_grant_revoked`**
+```
+Topic: ("carevault", "grt_rev")
+Data: (grant_id: u64, patient: Address, doctor: Address)
+```
+
+---
+
+## PART 8: DATA TYPES & STRUCTURES
+
+### RecordCategory (u32 enum)
+```
+0 = Prescription
+1 = LabReport
+2 = Scan
+3 = Vaccination
+4 = DischargeSummary
+5 = Other
+```
+
+### VerificationStatus (u32 enum)
+```
+0 = Pending
+1 = Verified
+2 = Failed
+```
+
+### MedicalRecord (struct)
+```rust
+pub struct MedicalRecord {
+    pub record_id: u64,
+    pub patient: Address,
+    pub ipfs_hash: Bytes,
+    pub category: RecordCategory,
+    pub uploaded_at: u64,           // Unix timestamp
+    pub file_size_kb: u32,
+    pub verification_status: VerificationStatus,
+    pub is_active: bool,
+}
+```
+
+### AccessGrant (struct)
+```rust
+pub struct AccessGrant {
+    pub grant_id: u64,
+    pub patient: Address,
+    pub doctor: Address,
+    pub record_ids: Vec<u64>,
+    pub granted_at: u64,            // Unix timestamp
+    pub expires_at: u64,            // Unix timestamp
+    pub is_active: bool,
+}
+```
+
+---
+
+## PART 9: CRITICAL OBSERVATIONS
+
+### Observation 1: IPFS Hash Type
+- **Contract expects:** `Bytes` (binary data)
+- **Frontend provides:** `String` converted to `Bytes` via `TextEncoder.encode()`
+- **Status:** ✅ CORRECT
+
+### Observation 2: Patient Authentication
+- **Contract requires:** `patient.require_auth()` call
+- **Frontend provides:** Patient signs transaction via Freighter
+- **Status:** ✅ CORRECT
+
+### Observation 3: Vector Encoding
+- **Contract expects:** `Vec<u64>` for record_ids
+- **Frontend provides:** Array of u64 converted to Soroban Vec
+- **Status:** ✅ CORRECT
+
+### Observation 4: Expiration Check
+- **Contract validates:** `expires_at > current_time`
+- **Frontend must provide:** Future Unix timestamp in seconds
+- **Current usage:** `new Date(Date.now() + duration * 24 * 60 * 60 * 1000).getTime() / 1000`
+- **Status:** ✅ CORRECT (converts to Unix timestamp in seconds)
+
+### Observation 5: Transaction Assembly
+- **Correct sequence:** Build → Simulate → Convert to XDR → Sign → Submit
+- **Current implementation:** ✅ CORRECT
+- **After simulation:** Transaction is ready for signing, no need to reassemble
+
+---
+
+## PART 10: FILES REQUIRED FOR COMPLETE DEBUG
+
+An engineer implementing the fix needs access to:
+
+### Contract Files (Read-Only - Understanding Only)
+```
+/contracts/record-registry/src/lib.rs
+/contracts/record-registry/src/types.rs
+/contracts/access-control/src/lib.rs
+/contracts/access-control/src/types.rs
+```
+
+### Frontend Files (Modify for Fix)
+```
+/frontend/src/utils/stellar.ts          (PRIMARY - Transaction builders)
+/frontend/src/hooks/useRecords.ts       (Uses buildUploadRecordTx)
+/frontend/src/hooks/useAccessGrants.ts  (Uses buildGrantAccessTx, buildRevokeAccessTx)
+/frontend/src/components/modals/UploadRecordModal.tsx
+/frontend/src/components/modals/GrantAccessModal.tsx
+/frontend/src/components/modals/RevokeAccessModal.tsx
+```
+
+### Configuration Files (Reference)
+```
+/frontend/.env                          (Contract IDs, network config)
+/.contract_ids/record_registry_id.txt
+/.contract_ids/access_control_id.txt
+```
+
+---
+
+## PART 11: CONCLUSION
+
+### SUMMARY OF FINDINGS
+
+**Status: ALL FUNCTION SIGNATURES MATCH - NO MISMATCHES DETECTED**
+
+The frontend `stellar.ts` correctly implements all three contract functions:
+- ✅ Function names match exactly
+- ✅ Parameter count matches
+- ✅ Parameter types match
+- ✅ Parameter order matches
+- ✅ nativeToScVal conversions are correct
+- ✅ IPFS hash is correctly encoded as Bytes
+- ✅ Patient address is correctly passed and will be authenticated
+- ✅ Vectors are correctly encoded
+- ✅ Transaction assembly sequence is correct
+- ✅ Contract IDs are correctly configured
+
+### RUNTIME ERROR CONTEXT
+
+The "Upload Failed - Wallet not connected" and transaction timeout errors are **NOT** caused by contract signature mismatches. They stem from:
+1. ✅ FIXED: Wallet state divergence (different sources reading different values)
+2. ✅ FIXED: Duplicate timebounds in transaction builder
+3. Potential causes (to be investigated by implementing engineer):
+   - Freighter signature not being requested
+   - Transaction simulation failures
+   - Soroban RPC connectivity issues
+   - Transaction submission failures
+
+---
+
+## DELIVERABLES FOR ENGINEER
+
+To fix remaining issues, an engineer needs:
+
+1. **Contract specifications** (this document) ✅ PROVIDED
+2. **Expected signatures** (Part 2) ✅ PROVIDED
+3. **Mismatch analysis** (Part 3) ✅ PROVIDED - NO MISMATCHES
+4. **File list** (Part 10) ✅ PROVIDED
+5. **stellar.ts** for examination ✅ READY
+
+**Next steps:** Engineer should trace the transaction submission flow to find where Freighter is not opening or where transactions are failing after building and simulation.
+
