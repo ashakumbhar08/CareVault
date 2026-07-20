@@ -71,6 +71,11 @@ export function addRecord(record: MedicalRecord): void {
   state.records.push(record);
 }
 
+export function setRecords(records: MedicalRecord[]): void {
+  console.log('[APP STATE] Setting', records.length, 'records in global store');
+  state.records = records;
+}
+
 export function clearRecords(): void {
   state.records = [];
 }

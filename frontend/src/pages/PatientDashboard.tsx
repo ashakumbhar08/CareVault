@@ -13,6 +13,7 @@ import { UploadRecordModal } from '../components/modals/UploadRecordModal';
 import { GrantAccessModal } from '../components/modals/GrantAccessModal';
 import { useToast } from '../hooks/useToast';
 import { useWallet } from '../hooks/useWallet';
+import { useRecords } from '../hooks/useRecords';
 import { RecordCategory } from '../types';
 import { Database, Shield } from 'lucide-react';
 import { getState, removeGrant, setWallet } from '../store/appState';
@@ -38,6 +39,12 @@ export const PatientDashboard = () => {
   const [revokeConfirmation, setRevokeConfirmation] = useState<string | null>(null);
   const [isRevoking, setIsRevoking] = useState(false);
   const { toasts, showToast, removeToast } = useToast();
+
+  // Initialize useRecords hook to fetch records from blockchain
+  useRecords({ 
+    walletAddress: walletAddress || undefined,
+    enabled: !!walletAddress 
+  });
 
   // FIX 3: Wallet guard with re-hydration
   useEffect(() => {
