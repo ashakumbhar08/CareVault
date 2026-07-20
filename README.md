@@ -336,6 +336,21 @@ stellar contract invoke \
 <img width="822" height="307" alt="image" src="https://github.com/user-attachments/assets/b07fa246-83e4-4f3f-bfb4-10c90e89cabe" />
 
 
+
+
+
+
+
+###TRANSACTION SUCCESSFULL SCREENSHOTS :
+
+
+<img width="1447" height="799" alt="Screenshot 2026-07-20 at 7 23 34 PM" src="https://github.com/user-attachments/assets/197bedfc-fe45-4efa-87f3-3f65b7955e64" />
+
+
+<img width="1447" height="799" alt="Screenshot 2026-07-20 at 7 20 36 PM" src="https://github.com/user-attachments/assets/20a0d762-7b06-4c80-afca-6c1527e7df43" />
+
+
+
 ## 🔄 Contract Interaction Flow
 
 ```
@@ -1007,6 +1022,12 @@ CareVault has been tested with 10+ real users onboarded via Freighter Wallet on 
 
 
 <img width="1447" height="799" alt="Screenshot 2026-06-29 at 2 09 12 AM" src="https://github.com/user-attachments/assets/76e345cb-ded4-49d7-8f38-9b5b324c247e" />
+
+
+<img width="1447" height="799" alt="Screenshot 2026-07-20 at 7 23 34 PM" src="https://github.com/user-attachments/assets/197bedfc-fe45-4efa-87f3-3f65b7955e64" />
+
+
+<img width="1447" height="799" alt="Screenshot 2026-07-20 at 7 20 36 PM" src="https://github.com/user-attachments/assets/20a0d762-7b06-4c80-afca-6c1527e7df43" />
 
 
 
