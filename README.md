@@ -510,11 +510,11 @@ cd contracts && cargo test
 
 ### Quick Demo (No Setup Required)
 
-Visit: **[https://carevault.vercel.app?demo=true][VERCEL_DEPLOYMENT_URL]**
+Visit the live application:
 
-Demo mode simulates all blockchain interactions without requiring Freighter wallet or testnet XLM. All features are fully explorable. Useful for demo video creation and stakeholder walkthrough.
+**https://care-vault-eta.vercel.app**
 
----
+> **Note:** This application runs on the Stellar Testnet. To use all features, install the Freighter Wallet extension and fund your wallet with Testnet XLM using Friendbot before interacting with the blockchain.
 
 ## 📁 Project Structure
 
