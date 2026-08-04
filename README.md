@@ -229,7 +229,7 @@ The AccessControl contract manages time-bound access grants between patients and
 
 | Contract | Contract ID | Explorer |
 |---|---|---|
-| **RecordRegistry** | `[RECORD_REGISTRY_CONTRACT_ID]` | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/[RECORD_REGISTRY_CONTRACT_ID]) |
+| **RecordRegistry** | `CAFK4PGOJBX4WP3K33EGBQQA7K2Z25R2U4ZFC4S4AVCCDK3ASKPV7BNE` | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/[RECORD_REGISTRY_CONTRACT_ID]) |
 | **AccessControl** | `CAVNZFTBKFRXNLAVI4IAT45GTJBSLJZZYX3GIXMY6Q3J7WPLNJSS43SK` | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CAVNZFTBKFRXNLAVI4IAT45GTJBSLJZZYX3GIXMY6Q3J7WPLNJSS43SK) |
 
 ### Network Configuration
