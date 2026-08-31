@@ -941,7 +941,11 @@ Purpose:
 All responses are automatically stored in a connected Google Sheet:
 
 👉 Response Spreadsheet
-https://docs.google.com/spreadsheets/d/1pdh-Aq--LX54wjU0HHpVa25rvQ4NpERYpAJQSA-cch8/edit?usp=sharing
+https://docs.google.com/spreadsheets/d/1pdh-Aq--LX54wjU0HHpVa25rvQ4NpERYpAJQSA-cch8/edit?usp=sharing 
+
+https://docs.google.com/spreadsheets/d/1pdh-Aq--LX54wjU0HHpVa25rvQ4NpERYpAJQSA-cch8/edit?gid=154032023#gid=154032023
+
+
 Purpose:
 
 * Maintain structured onboarding records
